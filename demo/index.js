@@ -1,41 +1,123 @@
 import generate from '../src/generator/index.js';
 
-const canvas = document.getElementById('map');
-const context = canvas.getContext('2d');
+// Elements
+const generater = document.getElementById('generater');
+const refresher = document.getElementById('refresher');
+const opener = document.getElementById('opener');
+const closer = document.getElementById('closer');
+const configPanel = document.getElementById('config');
+const grid = document.getElementById('grid');
+const context = grid.getContext('2d');
 
-const world = generate({
-  width: 150,
-  height: 100,
-  water: 0.2,
-  voronoi: {
-    sites: 5000,
-    relax: 2
-  },
-  shape: 'hexagon',
-  rivers: {
-    number: 10,
-    minHeight: 0.5
-  },
-  volcanos: {
-    number: 2,
-    minHeight: 0.8
-  },
-  coasts: {
-    top: 1,
-    right: 1,
-    bottom: 1,
-    left: 1
-  }
-});
+const inputWidth = document.getElementById('inputWidth');
+const inputHeight = document.getElementById('inputHeight');
+const inputWater = document.getElementById('inputWater');
+const gridTypeVoronoi = document.getElementById('gridTypeVoronoi');
+const gridTypeHexagon = document.getElementById('gridTypeHexagon');
+const inputCoastTop = document.getElementById('inputCoastTop');
+const inputCoastBottom = document.getElementById('inputCoastBottom');
+const inputCoastLeft = document.getElementById('inputCoastLeft');
+const inputCoastRight = document.getElementById('inputCoastRight');
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+// Events
+generater.addEventListener('click', () => {
+  updateConfig();
+  refresh();
+}, false);
+
+refresher.addEventListener('click', refresh, false);
+
+opener.addEventListener('click', () => {
+  configPanel.classList.add('open');
+}, false);
+
+closer.addEventListener('click', () => {
+  configPanel.classList.remove('open');
+}, false);
+
+window.addEventListener('resize', resize, false);
+
+// Default config
+let config;
+let world;
+
+// Main
+function resize() {
+  grid.width = window.innerWidth;
+  grid.height = window.innerHeight;
   draw();
 }
 
-window.addEventListener('resize', resizeCanvas, false);
-resizeCanvas();
+function refresh() {
+  grid.classList.add('hide');
+  let tries = 0;
+  world = undefined;
+
+  while (!world) {
+    try {
+      tries++;
+      world = generate(config);
+    } catch (e) {
+      console.error('Failed to generate world, trying again for the', tries, 'times');
+      if (tries >= 5) {
+        throw e;
+      }
+    }
+  }
+  resize();
+  grid.classList.remove('hide');
+}
+
+// Init
+inputWidth.value = 100 * window.innerWidth / window.innerHeight;
+inputHeight.value = 100;
+inputWater.value = 0.2;
+updateConfig();
+refresh();
+
+// Config
+function updateConfig() {
+  config = {
+    width: parseInt(inputWidth.value, 10),
+    height: parseInt(inputHeight.value, 10),
+    water: parseFloat(inputWater.value),
+    coasts: {
+      top: inputCoastTop.checked,
+      bottom: inputCoastBottom.checked,
+      left: inputCoastLeft.checked,
+      right: inputCoastRight.checked
+    },
+    rivers: {
+      number: 10,
+      minHeight: 0.6
+    },
+    volcanos: {
+      number: 2,
+      minHeight: 0.8
+    }
+  };
+
+  if (gridTypeVoronoi.checked) {
+    config.voronoi = {
+      sites: 5000,
+      relax: 2
+    };
+  } else if (gridTypeHexagon.checked) {
+    config.shape = 'hexagon';
+  }
+}
+
+// Utils
+function format(ratios, point) {
+  // return {
+  //   x: ratios.width * (point.x + 2/3),
+  //   y: ratios.height * (point.x / 2 + point.y + 1/2)
+  // };
+  return {
+    x: ratios.width * point.x,
+    y: ratios.height * point.y
+  };
+}
 
 function drawCell(cell, ratios) {
   if (cell.ocean) {
@@ -47,32 +129,39 @@ function drawCell(cell, ratios) {
   }
 
   context.beginPath();
-  context.moveTo(ratios.width * cell.edges[0].start.x, ratios.height * cell.edges[0].start.y);
+  const start = format(ratios, cell.edges[0].start);
+  context.moveTo(start.x, start.y);
+
   cell.edges.forEach(edge => {
-    context.lineTo(ratios.width * edge.end.x, ratios.height * edge.end.y);
+    const end = format(ratios, edge.end);
+    context.lineTo(end.x, end.y);
   })
   context.fill();
   context.closePath();
 }
 
 function drawEdge(edge, ratios) {
-  // if (edge.river) {
-  //   context.strokeStyle = '#369eea';
-  //   context.lineWidth = 2 + edge.river;
-  // } else {
-  //   context.strokeStyle = '#000';
-  //   context.lineWidth = 1;
-  // }
+  if (edge.rivers) {
+    context.strokeStyle = '#369eea';
+    context.lineWidth = 1 + 2 * edge.rivers.length;
+  } else {
+    context.strokeStyle = '#000';
+    context.lineWidth = 1;
+  }
 
   context.beginPath();
-  context.moveTo(ratios.width * edge.v1.x, ratios.height * edge.v1.y);
-  context.lineTo(ratios.width * edge.v2.x, ratios.height * edge.v2.y);
+  const v1 = format(ratios, edge.v1);
+  const v2 = format(ratios, edge.v2);
+  context.moveTo(v1.x, v1.y);
+  context.lineTo(v2.x, v2.y);
   context.stroke();
   context.closePath();
 }
 
 function draw() {
-  const ratios = { width: canvas.width / world.width, height: canvas.height / world.height };
-  world.diagram.cells.forEach(cell => drawCell(cell, ratios));
-  world.diagram.edges.forEach(edge => drawEdge(edge, ratios));
+  const start = performance.now();
+  const ratios = { width: grid.width / config.width, height: grid.height / config.height };
+  world.grid.cells.forEach(cell => drawCell(cell, ratios));
+  world.grid.edges.forEach(edge => drawEdge(edge, ratios));
+  console.debug('Duration world drawing:', Math.round(performance.now() - start), 'ms');
 }

@@ -1,5 +1,6 @@
 import FastSimplexNoise from 'fast-simplex-noise';
 
+import * as Maths from '../maths';
 import { isWater, filterWater, filterOcean, coastElevation, tagOcean, removeCoastalLakes } from './water';
 import * as Debug from './debug';
 import * as Grid from './grid';
@@ -19,9 +20,11 @@ export default function generate(options = {}) {
   } = options;
 
   const world = {
-    width, height, coasts,
     map: {}
   };
+
+  const distance = (!voronoi && shape === 'hexagon') ?
+    Maths.distanceHexagon2D : Maths.distanceSquare2D;
 
   const noise = new FastSimplexNoise({
     min: -water,
@@ -34,48 +37,112 @@ export default function generate(options = {}) {
 
   const hasCoast = coasts.left || coasts.top || coasts.bottom || coasts.right;
   const coastElv = hasCoast ?
-    coastElevation({ width, height, coasts }) :
+    coastElevation({ width, height, coasts, distance }) :
     () => 0;
 
-  const diagram = Grid.voronoi(Object.assign({}, voronoi, { width, height }));
+  const grid =
+    (voronoi && Grid.voronoi(Object.assign({}, voronoi, { width, height })))
+    || Grid.hexagon({ width, height });
+
+  console.log('Grid valid?', Grid.validate(grid));
 
   // Assign elevations
-  diagram.cells.forEach(cell => {
+  grid.cells.forEach(cell => {
     cell.elevation = noise.in2D(cell.x, cell.y) - coastElv(cell.x, cell.y);
   });
 
-  diagram.edges.forEach(edge => {
+  grid.edges.forEach(edge => {
     edge.elevation = ((edge.c1 ? edge.c1.elevation : 0) + (edge.c2 ? edge.c2.elevation : 0)) / ((edge.c1 ? 1 : 0) + (edge.c2 ? 1 : 0));
   });
 
   // Ocean
   if (hasCoast) {
-    tagOcean(diagram.cells, width, height, coasts);
-    removeCoastalLakes(diagram.cells, coastElv);
+    tagOcean(grid.cells, width, height, coasts, distance);
+    removeCoastalLakes(grid.cells, coastElv);
   }
 
   // Rivers
   if (rivers) {
-    const riverEdges = diagram.edges.filter(edge => edge.elevation > rivers.minHeight);
-    const riverStarts = [];
+    const riverEdges = grid.edges.filter(edge => edge.elevation > rivers.minHeight);
 
-    for(let i = 0; i < rivers.number; ++i) {
-      const edge = riverEdges[Math.floor(Math.random() * riverEdges.length)];
-      if (edge.river === undefined) {
-        edge.river = 1;
-        riverStarts.push(edge);
+    if (riverEdges.length > 0) {
+      const riverStarts = [];
+
+      for(let i = 0; i < rivers.number; ++i) {
+        const edge = riverEdges[Math.floor(Math.random() * (riverEdges.length - 1))];
+        if (edge.rivers === undefined) {
+          const river = [ edge ];
+          edge.rivers = [ river ];
+          riverStarts.push(river);
+        }
       }
+
+      function hasWater(edge) {
+        return (edge.c1 && isWater(edge.c1)) || (edge.c2 && isWater(edge.c2));
+      }
+
+      function areTouching(e1, e2) {
+        return e1.v1 === e2.v1 || e1.v1 === e2.v2 || e1.v2 === e2.v1 || e1.v2 === e2.v2;
+      }
+
+      function isValid(reference) {
+        return function (edge) {
+          return edge.elevation < reference.elevation
+            && !hasWater(edge)
+            && areTouching(reference, edge);
+        }
+      }
+
+      function neighborEdges(edge) {
+        let res = [];
+
+        if (edge.c1) { res = res.concat(edge.c1.edges); }
+        if (edge.c2) { res = res.concat(edge.c2.edges); }
+
+        return res.map(e => e.edge).filter(isValid(edge));
+      }
+
+      riverStarts.forEach(river => {
+        let next = river[0];
+        while(next) {
+          next = neighborEdges(next).reduce((res, e) => {
+            if (!res) return e;
+            return e.elevation < res.elevation ? e : res;
+          }, false);
+
+          if (next) {
+            river.push(next);
+            if (next.rivers) {
+              next.rivers.push(river);
+            } else {
+              next.rivers = [river];
+            }
+          }
+        }
+      });
+
+      function removeRiver(river) {
+        river.forEach(edge => {
+          edge.rivers = edge.rivers.filter(r => r !== river);
+          if (edge.rivers.length === 0) {
+            edge.rivers = undefined;
+          }
+        });
+      }
+
+      const finalRivers = riverStarts.filter(river => {
+        if (river.length < 4) {
+          removeRiver(river);
+          return false;
+        }
+        return true;
+      })
     }
-
-    riverStarts.forEach(start => {
-
-    });
   }
 
-
-  world.diagram = diagram;
+  world.grid = grid;
 
   // Debug.repartition(tiles);
-  console.debug("Duration:", (performance.now() - start) / 1000, 'sec');
+  console.debug("Duration world generation:", Math.round(performance.now() - start), 'ms');
   return world;
 }

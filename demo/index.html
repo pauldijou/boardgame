@@ -6,7 +6,25 @@
     <link rel="stylesheet" href="/index.css" media="screen" title="no title" charset="utf-8">
   </head>
   <body>
-    <canvas id="map"></canvas>
+    <canvas id="grid" class="hide"></canvas>
+    <div id="refresher"></div>
+    <div id="opener"></div>
+    <div id="config" class="open">
+      <div id="closer"></div>
+      <input type="range" id="inputWidth" placeholder="Grid width" min="20" max="200" step="10" />
+      <input type="range" id="inputHeight" placeholder="Grid height" min="20" max="200" step="10" />
+      <input type="range" id="inputWater" placeholder="Grid width" min="0" max="1" step="0.1" />
+      Voronoi
+      <input type="radio" id="gridTypeVoronoi" name="gridType" value="voronoi" checked />
+      <input type="radio" id="gridTypeHexagon" name="gridType" value="hexagon" />
+      Hexagon
+      <input type="checkbox" id="inputCoastTop" checked />
+      <input type="checkbox" id="inputCoastBottom" checked />
+      <input type="checkbox" id="inputCoastLeft" checked />
+      <input type="checkbox" id="inputCoastRight" checked />
+
+      <button id="generater" type="button">Generate</button>
+    </div>
     <script type="text/javascript" src="/bundle.js"></script>
   </body>
 </html>

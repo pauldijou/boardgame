@@ -2,6 +2,12 @@ import Voronoi from 'voronoi';
 import * as Maths from '../../maths';
 import validate from './validate';
 
+const sqrt3 = Math.sqrt(3);
+
+function hexagonSide(area) {
+  return Math.sqrt(2 * area / (3 * sqrt3));
+}
+
 function generateSites(number, shape, width, height) {
   const sites = [];
   if (shape === 'random') {
@@ -12,18 +18,24 @@ function generateSites(number, shape, width, height) {
       });
     }
   } else {
-    const delta = Math.sqrt(width * height / number);
-    let x = 0;
-    let y = 0;
+    const area = width * height / number;
+    const delta = (shape === 'hexagon') ?
+      { x: 2 * hexagonSide(area), y: sqrt3 * hexagonSide(area) } :
+      { x: Math.sqrt(area), y: Math.sqrt(area) };
+
+    console.log(delta);
+    let x = 0.5;
+    let y = 0.5;
     for (let i = 0; i < number; ++i) {
       sites.push({
-        x: Math.max(Math.min(Math.round(x * delta), width), 0),
-        y: Math.max(Math.min(Math.round(y * delta), height), 0),
+        x: Math.max(Math.min(Math.round(x * delta.x), width), 0),
+        y: Math.max(Math.min(Math.round(y * delta.y), height), 0),
       });
+      console.log(sites[sites.length-1]);
       x++;
-      if (x * delta > width) {
+      if (x * delta.x > width) {
         // start a new line
-        x = (shape === 'square' || y % 2 === 1 ? 0 : 0.5);
+        x = (shape === 'square' || y % 2 === 1 ? 0.5 : 1.5);
         y++;
       }
     }
@@ -114,8 +126,8 @@ function normalizeDiagram(diagram) {
     const lCell = edge.lSite && edge.lSite.cell;
     const rCell = edge.rSite && edge.rSite.cell;
     if (lCell && rCell) {
-      lCell.neighbors.push(rCell)
-      rCell.neighbors.push(lCell)
+      lCell.neighbors.push(rCell);
+      rCell.neighbors.push(lCell);
     }
 
     edge.v1 = edge.va;
@@ -142,8 +154,6 @@ export default function generateVoronoiGrid(options = {}) {
   for (let i = 0; i < relax; ++i) {
     diagram = relaxDiagram(voronoi, diagram, width, height);
   }
-  diagram = normalizeDiagram(diagram);
-  console.log(diagram);
-  console.log(validate(diagram));
-  return diagram;
+
+  return normalizeDiagram(diagram);
 }

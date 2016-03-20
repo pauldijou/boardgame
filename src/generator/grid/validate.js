@@ -1,8 +1,13 @@
 // Schema
 // {
-//   vertices: [{x, y}, ...],
-//   edges: [{v1: Vertex, v1: Vertex, c1: Cell, c2: Cell}],
-//   cells: [{ x, y, edges: [{start: Vertex, end: Vertex, edge: Edge}, ...] }, ...]
+// vertices: [{x, y}, ...],
+// edges: [{v1: Vertex, v1: Vertex, c1: Cell, c2: Cell}],
+// cells: [{
+//   x,
+//   y,
+//   neighbors: [Cell, ...],
+//   edges: [{start: Vertex, end: Vertex, edge: Edge}, ...]
+// }, ...]
 // }
 
 function isVertex(vertex) {

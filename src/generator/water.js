@@ -1,5 +1,3 @@
-import * as Maths from '../maths';
-
 export function isWater(tile) {
   return tile.elevation < 0;
 }
@@ -12,29 +10,29 @@ export function filterOcean(tiles) {
   return tiles.filter(tile => tile.ocean);
 }
 
-export function coastElevation({ width, height, coasts }) {
+export function coastElevation({ width, height, coasts, distance }) {
   const cx = width / 2;
   const cy = height / 2;
 
   // FIXME center tile always return 0 => always keep water
   // FIXME ponderate if width !== height
   return function (x, y) {
-    return Math.pow(Maths.distanceSquare2D(
-      (coasts.left && x < cx) || coasts.right ? x : cx,
-      (coasts.top && y < cy) || coasts.bottom ? y : cy,
+    return Math.pow(distance(
+      (coasts.left && x < cx) || (coasts.right && x >= cx) ? x : cx,
+      (coasts.top && y < cy) || (coasts.bottom && y >= cy) ? y : cy,
       cx,
       cy
     ) / Math.min(cx, cy), 3);
   }
 }
 
-export function tagOcean(cells, width, height, coasts) {
+export function tagOcean(cells, width, height, coasts, distance) {
   const starts = [];
 
-  const distTopLeft = cell => Maths.distanceSquare2D(0, 0, cell.x, cell.y);
-  const distTopRight = cell => Maths.distanceSquare2D(width, 0, cell.x, cell.y);
-  const distBottomLeft = cell => Maths.distanceSquare2D(0, height, cell.x, cell.y);
-  const distBottomRight = cell => Maths.distanceSquare2D(width, height, cell.x, cell.y);
+  const distTopLeft = cell => distance(0, 0, cell.x, cell.y);
+  const distTopRight = cell => distance(width, 0, cell.x, cell.y);
+  const distBottomLeft = cell => distance(0, height, cell.x, cell.y);
+  const distBottomRight = cell => distance(width, height, cell.x, cell.y);
 
   const { topLeft, topRight, bottomLeft, bottomRight } = cells.reduce((res, cell) => {
     if (distTopLeft(cell) < distTopLeft(res.topLeft)) { res.topLeft = cell; }
