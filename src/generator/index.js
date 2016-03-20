@@ -13,7 +13,9 @@ export default function generate(options = {}) {
     coasts = {},
     water = 0.2,
     shape,
-    voronoi
+    voronoi,
+    rivers,
+    volcanos
   } = options;
 
   const world = {
@@ -37,14 +39,39 @@ export default function generate(options = {}) {
 
   const diagram = Grid.voronoi(Object.assign({}, voronoi, { width, height }));
 
+  // Assign elevations
   diagram.cells.forEach(cell => {
     cell.elevation = noise.in2D(cell.x, cell.y) - coastElv(cell.x, cell.y);
   });
 
+  diagram.edges.forEach(edge => {
+    edge.elevation = ((edge.c1 ? edge.c1.elevation : 0) + (edge.c2 ? edge.c2.elevation : 0)) / ((edge.c1 ? 1 : 0) + (edge.c2 ? 1 : 0));
+  });
+
+  // Ocean
   if (hasCoast) {
     tagOcean(diagram.cells, width, height, coasts);
     removeCoastalLakes(diagram.cells, coastElv);
   }
+
+  // Rivers
+  if (rivers) {
+    const riverEdges = diagram.edges.filter(edge => edge.elevation > rivers.minHeight);
+    const riverStarts = [];
+
+    for(let i = 0; i < rivers.number; ++i) {
+      const edge = riverEdges[Math.floor(Math.random() * riverEdges.length)];
+      if (edge.river === undefined) {
+        edge.river = 1;
+        riverStarts.push(edge);
+      }
+    }
+
+    riverStarts.forEach(start => {
+
+    });
+  }
+
 
   world.diagram = diagram;
 

@@ -39,77 +39,60 @@ function generateDiagram(voronoi, sites, previousDiagram, width, height) {
   return voronoi.compute(sites, area);
 }
 
-function cellArea(cell) {
-  var area = 0,
-      halfedges = cell.halfedges,
-      iHalfedge = halfedges.length,
-      halfedge,
-      p1, p2;
-  while (iHalfedge--) {
-      halfedge = halfedges[iHalfedge];
-      p1 = halfedge.getStartpoint();
-      p2 = halfedge.getEndpoint();
-      area += p1.x * p2.y;
-      area -= p1.y * p2.x;
-  }
-  area /= 2;
-  return area;
+function getCellArea(cell) {
+  return cell.halfedges.reduce((area, edge) => {
+    const start = edge.getStartpoint();
+    const end = edge.getEndpoint();
+    return area + (start.x * end.y) - (start.y * end.x);
+  }, 0) / 2;
 }
 
-function cellCentroid (cell) {
-  var x = 0,
-      y = 0,
-      halfedges = cell.halfedges,
-      iHalfedge = halfedges.length,
-      halfedge,
-      v, p1, p2;
-  while (iHalfedge--) {
-      halfedge = halfedges[iHalfedge];
-      p1 = halfedge.getStartpoint();
-      p2 = halfedge.getEndpoint();
-      v = p1.x * p2.y - p2.x * p1.y;
-      x += (p1.x + p2.x) * v;
-      y += (p1.y + p2.y) * v;
-  }
-  v = cellArea(cell) * 6;
+function getCellCentroid (cell) {
+  const area = getCellArea(cell) * 6;
+  const centroid = cell.halfedges.reduce((cent, edge) => {
+    const start = edge.getStartpoint();
+    const end = edge.getEndpoint();
+    const localArea = start.x * end.y - end.x * start.y;
+    cent.x += (start.x + end.x) * localArea;
+    cent.y += (start.y + end.y) * localArea;
+    return cent;
+  }, { x: 0, y: 0 });
+
   return {
-      x: x / v,
-      y: y / v
+    x: centroid.x / area,
+    y: centroid.y / area
   };
 }
 
 function relaxDiagram(voronoi, diagram, width, height) {
-  var cells = diagram.cells,
-      iCell = cells.length,
-      cell,
-      site, sites = [],
-      rn, dist;
-  var p = 1 / iCell * 0.1;
-  while (iCell--) {
-      cell = cells[iCell];
-      rn = Math.random();
-      // probability of apoptosis
-      if (rn < p) {
-          continue;
-      }
-      site = cellCentroid(cell);
-      dist = Maths.distanceSquare2D(site.x, site.y, cell.site.x, cell.site.y);
-      // dist = this.distance(site, cell.site);
-      // don't relax too fast
-      if (dist > 2) {
-          site.x = (site.x + cell.site.x) / 2;
-          site.y = (site.y + cell.site.y) / 2;
-      }
-      // probability of mytosis
-      if (rn > (1 - p)) {
-          dist /= 2;
-          sites.push({
-              x: site.x + (site.x - cell.site.x) / dist,
-              y: site.y + (site.y - cell.site.y) / dist
-          });
-      }
-      sites.push(site);
-  }
+  const prob = 0.1 / diagram.cells.length;
+  const sites = [];
+
+  diagram.cells.forEach(cell => {
+    const rand = Math.random();
+    if (rand < prob) {
+      // apoptosis
+      return;
+    }
+
+    const site = getCellCentroid(cell);
+    const distance = Maths.distanceSquare2D(site.x, site.y, cell.site.x, cell.site.y);
+
+    if (distance > 2) {
+      site.x = (site.x + cell.site.x) / 2;
+      site.y = (site.y + cell.site.y) / 2;
+    }
+
+    if (rand > (1 - prob)) {
+      // mytosis
+      sites.push({
+        x: site.x + 2 * (site.x - cell.site.x) / distance,
+        y: site.y + 2 * (site.y - cell.site.y) / distance
+      });
+    }
+
+    sites.push(site);
+  });
 
   return generateDiagram(voronoi, sites, diagram, width, height);
 }
@@ -134,6 +117,11 @@ function normalizeDiagram(diagram) {
       lCell.neighbors.push(rCell)
       rCell.neighbors.push(lCell)
     }
+
+    edge.v1 = edge.va;
+    edge.v2 = edge.vb;
+    edge.c1 = lCell;
+    edge.c2 = rCell;
   });
 
   return diagram;

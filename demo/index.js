@@ -13,13 +13,17 @@ const world = generate({
   },
   shape: 'hexagon',
   rivers: {
-    number: 200,
+    number: 10,
     minHeight: 0.5
+  },
+  volcanos: {
+    number: 2,
+    minHeight: 0.8
   },
   coasts: {
     top: 1,
-    right: 0,
-    bottom: 0,
+    right: 1,
+    bottom: 1,
     left: 1
   }
 });
@@ -33,7 +37,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas, false);
 resizeCanvas();
 
-function drawCell(cell, ratio) {
+function drawCell(cell, ratios) {
   if (cell.ocean) {
     context.fillStyle = '#82caff';
   } else if (cell.elevation < 0) {
@@ -43,15 +47,32 @@ function drawCell(cell, ratio) {
   }
 
   context.beginPath();
-  context.moveTo(ratio.width * cell.edges[0].start.x, ratio.height * cell.edges[0].start.y);
+  context.moveTo(ratios.width * cell.edges[0].start.x, ratios.height * cell.edges[0].start.y);
   cell.edges.forEach(edge => {
-    context.lineTo(ratio.width * edge.end.x, ratio.height * edge.end.y);
+    context.lineTo(ratios.width * edge.end.x, ratios.height * edge.end.y);
   })
-  context.closePath();
   context.fill();
+  context.closePath();
+}
+
+function drawEdge(edge, ratios) {
+  // if (edge.river) {
+  //   context.strokeStyle = '#369eea';
+  //   context.lineWidth = 2 + edge.river;
+  // } else {
+  //   context.strokeStyle = '#000';
+  //   context.lineWidth = 1;
+  // }
+
+  context.beginPath();
+  context.moveTo(ratios.width * edge.v1.x, ratios.height * edge.v1.y);
+  context.lineTo(ratios.width * edge.v2.x, ratios.height * edge.v2.y);
   context.stroke();
+  context.closePath();
 }
 
 function draw() {
-  world.diagram.cells.forEach(cell => drawCell(cell, { width: canvas.width / world.width, height: canvas.height / world.height }));
+  const ratios = { width: canvas.width / world.width, height: canvas.height / world.height };
+  world.diagram.cells.forEach(cell => drawCell(cell, ratios));
+  world.diagram.edges.forEach(edge => drawEdge(edge, ratios));
 }

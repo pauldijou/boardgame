@@ -1,7 +1,7 @@
 // Schema
 // {
 //   vertices: [{x, y}, ...],
-//   edges: [{va: Vertex, vb: Vertex}],
+//   edges: [{v1: Vertex, v1: Vertex, c1: Cell, c2: Cell}],
 //   cells: [{ x, y, edges: [{start: Vertex, end: Vertex, edge: Edge}, ...] }, ...]
 // }
 
@@ -27,7 +27,7 @@ function isOrientedEdge(edge) {
 }
 
 function isEdge(edge) {
-  return edge && isVertex(edge.va) && isVertex(edge.vb);
+  return edge && isVertex(edge.v1) && isVertex(edge.v2);
 }
 
 function hasEdges(grid) {
