@@ -4,17 +4,23 @@ const canvas = document.getElementById('map');
 const context = canvas.getContext('2d');
 
 const world = generate({
-  width: 100,
+  width: 150,
   height: 100,
-  tiles: 1000,
-  water: 0.20,
-  voronoi: true,
+  water: 0.2,
+  voronoi: {
+    sites: 5000,
+    relax: 2
+  },
   shape: 'hexagon',
+  rivers: {
+    number: 200,
+    minHeight: 0.5
+  },
   coasts: {
-    top: true,
-    right: false,
-    bottom: false,
-    left: true
+    top: 1,
+    right: 0,
+    bottom: 0,
+    left: 1
   }
 });
 
@@ -27,25 +33,25 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas, false);
 resizeCanvas();
 
-function draw() {
-  const width = canvas.width / world.width;
-  const height = canvas.height / world.height;
-
-  let water = 0;
-
-  for (let x = 0; x < world.width; ++x) {
-    for (let y = 0; y < world.height; ++y) {
-      const tile = world.map[x][y];
-      if (tile.ocean) {
-        water++;
-        context.fillStyle = '#82caff';
-      } else if (tile.elevation < 0) {
-        water++;
-        context.fillStyle = '#2f9ceb';
-      } else {
-        context.fillStyle = `rgba(0,0,0, ${tile.elevation})`;
-      }
-      context.fillRect (x * width, y * height, width, height);
-    }
+function drawCell(cell, ratio) {
+  if (cell.ocean) {
+    context.fillStyle = '#82caff';
+  } else if (cell.elevation < 0) {
+    context.fillStyle = '#2f9ceb';
+  } else {
+    context.fillStyle = `rgba(0,0,0, ${cell.elevation})`;
   }
+
+  context.beginPath();
+  context.moveTo(ratio.width * cell.edges[0].start.x, ratio.height * cell.edges[0].start.y);
+  cell.edges.forEach(edge => {
+    context.lineTo(ratio.width * edge.end.x, ratio.height * edge.end.y);
+  })
+  context.closePath();
+  context.fill();
+  context.stroke();
+}
+
+function draw() {
+  world.diagram.cells.forEach(cell => drawCell(cell, { width: canvas.width / world.width, height: canvas.height / world.height }));
 }
