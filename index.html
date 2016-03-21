@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>boardgame</title>
+    <link rel="stylesheet" href="./index.css" media="screen" title="no title" charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  </head>
+  <body>
+    <canvas id="grid" class="hide"></canvas>
+    <div class="icons">
+      <i id="refresher" class="icon fa fa-2x fa-refresh" title="Refresh"></i>
+      <i id="opener" class="icon fa fa-2x fa-cog" title="Settings"></i>
+      <a class="icon" href="https://github.com/pauldijou/boardgame" alt="GitHub">
+        <i class="icon fa fa-2x fa-github" title="GitHub"></i>
+      </a>
+    </div>
+    <div id="config">
+      <div id="closer">
+        <i class="fa fa-2x fa-times" title="Close"></i>
+      </div>
+      <h1>boardgame</h1>
+      <div class="row">
+        <label id="labelWidth" for="inputWidth" class="label"></label>
+        <input type="range" id="inputWidth" min="10" max="300" step="10" />
+      </div>
+      <div class="row">
+        <label id="labelHeight" for="inputHeight" class="label"></label>
+        <input type="range" id="inputHeight" min="10" max="300" step="10" />
+      </div>
+      <div class="row">
+        <label id="labelWater" for="inputWater" class="label"></label>
+        <input type="range" id="inputWater" min="0" max="1" step="0.1" />
+      </div>
+      <div class="row">
+        <span id="labelGridType" class="label">Grid type:</span>
+        <label for="gridTypeVoronoi">
+          <input type="radio" id="gridTypeVoronoi" name="gridType" value="voronoi" checked />
+          Voronoi
+        </label>
+        <label for="gridTypeHexagon">
+          <input type="radio" id="gridTypeHexagon" name="gridType" value="hexagon" />
+          Hexagons
+        </label>
+      </div>
+      <div class="row voronoi hidden">
+        <label id="labelVoronoiSites" for="inputVoronoiSites" class="label"></label>
+        <input type="range" id="inputVoronoiSites" min="1000" max="15000" step="500" />
+      </div>
+      <div class="row voronoi hidden">
+        <label id="labelVoronoiRelax" for="inputVoronoiRelax" class="label"></label>
+        <input type="range" id="inputVoronoiRelax" min="0" max="10" step="1" />
+      </div>
+      <div class="row">
+        <span class="label">Coasts:</span>
+        <label for="inputCoastTop">
+          <input type="checkbox" id="inputCoastTop" checked />
+          Top
+        </label>
+        <label for="inputCoastBottom">
+          <input type="checkbox" id="inputCoastBottom" checked />
+          Bottom
+        </label>
+        <label for="inputCoastLeft">
+          <input type="checkbox" id="inputCoastLeft" checked />
+          Left
+        </label>
+        <label for="inputCoastRight">
+          <input type="checkbox" id="inputCoastRight" checked />
+          Right
+        </label>
+      </div>
+      <div>
+        <button id="generater" type="button">Generate</button>
+      </div>
+      <h2>Help</h2>
+      <p><strong>Width</strong> and <strong>height</strong> are the size of the map.</p>
+      <p>The bigger <strong>water</strong>, the more water on the map. It is not a percentage, <code>0.2</code> does not mean there will be 20% of water.</p>
+      <p>The grid type defines how to generate the cells. <strong>Voronoi</strong> is using the voronoi diagrams. <strong>Hexagons</strong> will generate a classic hexagonal grid with <code>width * height</code> hexagons.</p>
+      <p><strong>Voronoi</strong> grid can be tuned. The number of <strong>sites</strong> is the init number of cells. Then, the higher <strong>relax</strong>, the rounder the cells (some might be removed).</p>
+      <p>You can specify if you want or not a <strong>coast</strong> on each side of the map. Having them all will generate an island.</p>
+      <h2>Author</h2>
+      <p><a href="http://pauldijou.fr">Paul Dijou</a></p>
+      <p><i class="fa fa-github" title="GitHub"></i> <a href="https://github.com/pauldijou">pauldijou</a></p>
+      <p><i class="fa fa-twitter" title="Twitter"></i> <a href="https://twitter.com/paul_dijou">@paul_dijou</a></p>
+    </div>
+    <script type="text/javascript" src="./bundle.js"></script>
+    <script type="text/javascript">
+      WebFontConfig = {
+        google: { families: [ 'Roboto::latin' ] }
+      };
+      (function() {
+        var wf = document.createElement('script');
+        wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+        wf.type = 'text/javascript';
+        wf.async = 'true';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(wf, s);
+      })();
+    </script>
+  </body>
+</html>
