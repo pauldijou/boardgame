@@ -1,2 +1,5 @@
 demo
+dist
 test
+deploy.sh
+webpack.config.js
