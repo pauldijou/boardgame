@@ -1,48 +1,34 @@
+// ---------------------------------
+// Please, don't read this file...
+// this is quick and dirty pure JavaScript
+// in order to bind the demo UI to the generator
+// ---------------------------------
+
 import generate from '../src/generator/index.js';
 
-// Elements
-function byId(id) {
-  return document.getElementById(id)
+import * as $ from './js/elements';
+
+// Global mutable YOLO stuff (told you it was dirty...)
+let config;
+let world;
+let format;
+
+// Default values
+$.inputs.noise.circumference.value = 50;
+$.inputs.noise.amplitude.value = 1;
+$.inputs.noise.octaves.value = 6;
+$.inputs.noise.frequency.value = 0.03;
+$.inputs.noise.persistence.value = 0.2;
+
+if ($.inputs.gridTypeVoronoi.checked) {
+  $.inputs.height.value = 150;
+} else {
+  $.inputs.height.value = 60;
 }
-
-const $ = {
-  generater: byId('generater'),
-  refresher: byId('refresher'),
-  opener: byId('opener'),
-  closer: byId('closer'),
-  configPanel: byId('config'),
-  grid: byId('grid'),
-  inputs: {
-    width: byId('inputWidth'),
-    height: byId('inputHeight'),
-    water: byId('inputWater'),
-    gridTypeVoronoi: byId('gridTypeVoronoi'),
-    gridTypeHexagon: byId('gridTypeHexagon'),
-    voronoi: {
-      sites: byId('inputVoronoiSites'),
-      relax: byId('inputVoronoiRelax'),
-    },
-    coastTop: byId('inputCoastTop'),
-    coastBottom: byId('inputCoastBottom'),
-    coastLeft: byId('inputCoastLeft'),
-    coastRight: byId('inputCoastRight'),
-  },
-  labels: {
-    width: byId('labelWidth'),
-    height: byId('labelHeight'),
-    water: byId('labelWater'),
-    voronoi: {
-      sites: byId('labelVoronoiSites'),
-      relax: byId('labelVoronoiRelax'),
-    }
-  },
-  details: {
-    voronoi: document.querySelectorAll('.voronoi'),
-    hexagons: document.querySelectorAll('.hexagons')
-  }
-};
-
-$.context = $.grid.getContext('2d');
+$.inputs.width.value = $.inputs.height.value * window.innerWidth / window.innerHeight;
+$.inputs.water.value = 0.2;
+$.inputs.voronoi.sites.value = 7500;
+$.inputs.voronoi.relax.value = 2;
 
 // Events
 $.generater.addEventListener('click', () => {
@@ -73,16 +59,16 @@ window.addEventListener('resize', resize, false);
 });
 
 [
+  $.inputs.noiseTypeDefault,
+  $.inputs.noiseTypeCustom,
+  $.inputs.noise.shapeFlat,
+  $.inputs.noise.shapeCylindrical,
+  $.inputs.noise.shapeSpherical,
   $.inputs.gridTypeVoronoi,
   $.inputs.gridTypeHexagon,
 ].forEach(input => {
   input.addEventListener('change', updateUI);
 });
-
-// Default config
-let config;
-let world;
-let format;
 
 // Main
 function resize() {
@@ -113,16 +99,7 @@ function refresh() {
   grid.classList.remove('hide');
 }
 
-// Init
-if ($.inputs.gridTypeVoronoi.checked) {
-  $.inputs.height.value = 150;
-} else {
-  $.inputs.height.value = 60;
-}
-$.inputs.width.value = $.inputs.height.value * window.innerWidth / window.innerHeight;
-$.inputs.water.value = 0.2;
-$.inputs.voronoi.sites.value = 7500;
-$.inputs.voronoi.relax.value = 2;
+// Init UI
 updateConfig();
 updateUI();
 refresh();
@@ -138,7 +115,19 @@ function forEachNode(nodes, func) {
 }
 
 function updateUI() {
-  console.log('UPDATE UI');
+  if ($.inputs.noiseTypeCustom.checked) {
+    forEachNode($.details.noise, show);
+  } else {
+    forEachNode($.details.noise, hide);
+  }
+
+  if($.inputs.noise.shapeCylindrical.checked
+    || $.inputs.noise.shapeSpherical.checked) {
+    forEachNode($.details.noiseCircumference, show);
+  } else {
+    forEachNode($.details.noiseCircumference, hide);
+  }
+
   $.labels.width.innerHTML = `Width: ${$.inputs.width.value}`;
   $.labels.height.innerHTML = `Height: ${$.inputs.height.value}`;
   $.labels.water.innerHTML = `Water: ${$.inputs.water.value}`;
@@ -177,6 +166,24 @@ function updateConfig() {
       minHeight: 0.8
     }
   };
+
+  if ($.inputs.noiseTypeCustom.checked) {
+    config.noise = {
+      shape: ($.inputs.noise.shapeCylindrical.checked && 'cylindrical')
+        || ($.inputs.noise.shapeSpherical.checked && 'spherical')
+        || 'flat',
+      amplitude: parseFloat($.inputs.noise.amplitude.value),
+      octaves: parseInt($.inputs.noise.octaves.value, 10),
+      frequency: parseFloat($.inputs.noise.frequency.value),
+      persistence: parseFloat($.inputs.noise.persistence.value),
+    };
+
+    if($.inputs.noise.shapeCylindrical.checked
+      || $.inputs.noise.shapeSpherical.checked) {
+      config.noise.circumference = $.inputs.noise.circumference.value;
+    }
+  }
+
 
   if ($.inputs.gridTypeVoronoi.checked) {
     format = formatVoronoi;

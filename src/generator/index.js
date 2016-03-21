@@ -5,10 +5,23 @@ import { isWater, filterWater, filterOcean, coastElevation, tagOcean, removeCoas
 import * as Debug from './debug';
 import * as Grid from './grid';
 
+function cylindrical(noise, circumference) {
+  return function cylindrical2D(x, y) {
+    return noise.cylindrical2D(circumference, x, y);
+  }
+}
+
+function spherical(noise, circumference) {
+  return function spherical2D(x, y) {
+    return noise.spherical2D(circumference, x, y);
+  }
+}
+
 export default function generate(options = {}) {
   const start = performance.now();
 
   const {
+    noise: noiseConfig = {},
     width,
     height,
     coasts = {},
@@ -26,14 +39,19 @@ export default function generate(options = {}) {
   const distance = (!voronoi && shape === 'hexagon') ?
     Maths.distanceHexagon2D : Maths.distanceSquare2D;
 
-  const noise = new FastSimplexNoise({
+  const noise = new FastSimplexNoise(Object.assign({
     min: -water,
     max: 1,
     // amplitude: 0.2,
     octaves: 6,
     frequency: 0.03,
     persistence: 0.2,
-  });
+  }, noiseConfig));
+
+  const noiser =
+    (noise.shape === 'cylindrical' && noise.cylindrical2D.bind(noise, noiseConfig.circumference))
+    || (noise.shape === 'spherical' && noise.spherical2D.bind(noise, noiseConfig.circumference))
+    || noise.in2D.bind(noise);
 
   const hasCoast = coasts.left || coasts.top || coasts.bottom || coasts.right;
   const coastElv = hasCoast ?
@@ -48,7 +66,7 @@ export default function generate(options = {}) {
 
   // Assign elevations
   grid.cells.forEach(cell => {
-    cell.elevation = noise.in2D(cell.x, cell.y) - coastElv(cell.x, cell.y);
+    cell.elevation = noiser(cell.x, cell.y) - coastElv(cell.x, cell.y);
   });
 
   grid.edges.forEach(edge => {
