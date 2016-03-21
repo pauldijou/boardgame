@@ -82,6 +82,7 @@ window.addEventListener('resize', resize, false);
 // Default config
 let config;
 let world;
+let format;
 
 // Main
 function resize() {
@@ -178,24 +179,29 @@ function updateConfig() {
   };
 
   if ($.inputs.gridTypeVoronoi.checked) {
+    format = formatVoronoi;
     config.voronoi = {
       sites: parseInt($.inputs.voronoi.sites.value, 10),
       relax: parseInt($.inputs.voronoi.relax.value, 10)
     };
   } else if ($.inputs.gridTypeHexagon.checked) {
+    format = formatHexagon;
     config.shape = 'hexagon';
   }
 }
 
 // Utils
-function format(ratios, point) {
-  // return {
-  //   x: ratios.width * (point.x + 2/3),
-  //   y: ratios.height * (point.x / 2 + point.y + 1/2)
-  // };
+function formatVoronoi(ratios, point) {
   return {
     x: ratios.width * point.x,
     y: ratios.height * point.y
+  };
+}
+
+function formatHexagon(ratios, point) {
+  return {
+    x: ratios.width * (point.x + 2/3),
+    y: ratios.height * (point.x / 2 + point.y + 1/2)
   };
 }
 
