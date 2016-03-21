@@ -41,6 +41,7 @@
     "clean": "rm -rf lib",
     "build": "babel src --out-dir lib",
     "prepublish": "npm run clean && npm run build",
-    "demo": "webpack-dev-server --config ./demo/webpack.config.js --hot --inline"
+    "demo": "webpack-dev-server --config ./webpack.config.js --hot --inline",
+    "deploy": "mkdir dist -p && webpack --config ./webpack.config.js && cp ./demo/index.html ./dist && cp ./demo/index.css ./dist && ./deploy.sh -m 'Deploy demo'"
   }
 }
