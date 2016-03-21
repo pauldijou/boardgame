@@ -61,9 +61,11 @@ export function tagOcean(cells, width, height, coasts, distance) {
     starts.push(bottomRight);
   }
 
+  let deeper = 0;
   const ocean = starts.filter(isWater).map(t => { t.ocean = true; return t; });
   while(ocean.length) {
     const next = ocean.shift();
+    deeper = Math.min(deeper, next.elevation);
     next.neighbors.forEach(cell => {
       if (cell && cell.ocean === undefined) {
         cell.ocean = isWater(cell);
@@ -73,6 +75,11 @@ export function tagOcean(cells, width, height, coasts, distance) {
       }
     });
   }
+
+  deeper = Math.abs(deeper);
+  cells.filter(c => c.ocean).forEach(cell => {
+    cell.elevation /= deeper;
+  });
 }
 
 export function removeCoastalLakes(cells, coastElv) {

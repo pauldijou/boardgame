@@ -6,6 +6,19 @@
 
 html, body { width:100%; height:100%; margin: 0; padding: 0; }
 
+body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+}
+
+label {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
 #grid {
   display: block;
   background: #eee;
@@ -17,24 +30,27 @@ html, body { width:100%; height:100%; margin: 0; padding: 0; }
   opacity: 0;
 }
 
-#refresher {
+.icons {
   position: fixed;
-  top: 20px;
-  right: 50px;
-  height: 20px;
-  width: 20px;
-  cursor: pointer;
-  background: green;
+  top: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 20px 40px;
 }
 
-#opener {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  height: 20px;
-  width: 20px;
+.icons .icon {
   cursor: pointer;
-  background: red;
+  display: inline-block;
+  margin-left: 20px;
+}
+
+.icons .icon:first-child {
+  margin-left: 0;
+}
+
+a, a:visited, a:active {
+  color: black;
+  text-decoration: none;
 }
 
 #config {
@@ -57,8 +73,40 @@ html, body { width:100%; height:100%; margin: 0; padding: 0; }
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 20px;
-  height: 20px;
   cursor: pointer;
-  background: red;
+}
+
+.row {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.row > * {
+  flex-grow: 1;
+}
+
+.row > *:first-child {
+  flex-grow: 0;
+}
+
+.label {
+  min-width: 100px;
+  display: inline-block;
+}
+
+#generater {
+  display: block;
+  margin: 20px auto;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 10px 20px;
+  color: white;
+  background-color: #D50000;
+  border: 0;
+}
+
+#generater:hover {
+  background-color: #B71C1C;
 }
