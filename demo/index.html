@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>boardgame</title>
-    <link rel="stylesheet" href="./index.css" media="screen" title="no title" charset="utf-8">
+    <link rel="stylesheet" href="./styles.css" media="screen" title="no title" charset="utf-8">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
   </head>
   <body>
@@ -15,7 +15,7 @@
         <i class="icon fa fa-2x fa-github" title="GitHub"></i>
       </a>
     </div>
-    <div id="config" class="open">
+    <div id="config">
       <div id="closer">
         <i class="fa fa-2x fa-times" title="Close"></i>
       </div>
@@ -25,7 +25,7 @@
         <span class="label">
           <i class="fa fa-question-circle">
             <span class="tooltip">
-              Simplex Noise is the math function used to generate a random but smooth elevation accross the grid. You can tuned it if you want.
+              Simplex Noise is the math function used to generate a random but smooth elevation accross the grid. You can tune it manually if you want.
             </span>
           </i>
           Noise:
@@ -74,6 +74,11 @@
 
       <div class="row noise">
         <label for="inputNoiseAmplitude" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The maximum absolute value that a specific coherent-noise function can output. But value will be scale so no final height is greater than <code>1</code> and depending on the <strong>water</strong> parameter.
+            </span>
+          </i>
           Amplitude:
         </label>
         <input type="number" id="inputNoiseAmplitude" />
@@ -81,6 +86,11 @@
 
       <div class="row noise">
         <label for="inputNoiseOctaves" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The final output you can see is actually the sum of several functions and each one is called an octave. Each octave has a greater frequency than the previous one, thus, the more octaves, the more details on the map.
+            </span>
+          </i>
           Octaves:
         </label>
         <input type="number" id="inputNoiseOctaves" min="0" step="1" />
@@ -88,6 +98,11 @@
 
       <div class="row noise">
         <label for="inputNoiseFrequency" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The frequency determines how many changes occur along a unit length. Increasing the frequency will increase the number of terrain features (and also decrease the size of these features), decreasing it will render a smoother map.
+            </span>
+          </i>
           Frequency:
         </label>
         <input type="number" id="inputNoiseFrequency" />
@@ -95,6 +110,11 @@
 
       <div class="row noise">
         <label for="inputNoisePersistence" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              A multiplier that determines how quickly the amplitudes diminish for each successive octave. Increasing the persistence value will create a rougher map, while decreasing the persistence value will create a smoother height map.
+            </span>
+          </i>
           Persistence:
         </label>
         <input type="number" id="inputNoisePersistence" />
@@ -193,7 +213,7 @@
       <p><i class="fa fa-github" title="GitHub"></i> <a href="https://github.com/pauldijou">pauldijou</a></p>
       <p><i class="fa fa-twitter" title="Twitter"></i> <a href="https://twitter.com/paul_dijou">@paul_dijou</a></p>
     </div>
-    <script type="text/javascript" src="./bundle.js"></script>
+    <script type="text/javascript" src="./scripts.js"></script>
     <script type="text/javascript">
       WebFontConfig = {
         google: { families: [ 'Roboto::latin' ] }

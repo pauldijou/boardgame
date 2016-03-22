@@ -17,7 +17,7 @@ let format;
 $.inputs.noise.circumference.value = 50;
 $.inputs.noise.amplitude.value = 1;
 $.inputs.noise.octaves.value = 6;
-$.inputs.noise.frequency.value = 0.03;
+$.inputs.noise.frequency.value = 0.02;
 $.inputs.noise.persistence.value = 0.2;
 
 if ($.inputs.gridTypeVoronoi.checked) {
@@ -214,6 +214,13 @@ function formatHexagon(ratios, point) {
 
 function drawCell(cell, ratios) {
   if (cell.ocean) {
+    // if (cell.elevation < -0.95) {
+    //   $.context.fillStyle = `rgba(180,71,10, 1)`;
+    // } else if (cell.elevation < -0.5) {
+    //   $.context.fillStyle = `rgba(13,200,15, ${Math.abs(cell.elevation)})`;
+    // } else {
+    //   $.context.fillStyle = `rgba(13,71,161, ${0.4 + Math.abs(cell.elevation)})`;
+    // }
     $.context.fillStyle = `rgba(13,71,161, ${0.4 + Math.abs(cell.elevation)})`;
   } else if (cell.elevation < 0) {
     $.context.fillStyle = '#2f9ceb';

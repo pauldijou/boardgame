@@ -66,6 +66,7 @@ export default function generate(options = {}) {
 
   // Assign elevations
   grid.cells.forEach(cell => {
+    // cell.elevation = - coastElv(cell.x, cell.y);
     cell.elevation = noiser(cell.x, cell.y) - coastElv(cell.x, cell.y);
   });
 
