@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>boardgame</title>
-    <link rel="stylesheet" href="./index.css" media="screen" title="no title" charset="utf-8">
+    <link rel="stylesheet" href="./styles.8d357bd606e7901c2cd3954b2798520c.css" media="screen" title="no title" charset="utf-8">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
   </head>
   <body>
@@ -20,20 +20,135 @@
         <i class="fa fa-2x fa-times" title="Close"></i>
       </div>
       <h1>boardgame</h1>
+
+      <div class="row">
+        <span class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              Simplex Noise is the math function used to generate a random but smooth elevation accross the grid. You can tune it manually if you want.
+            </span>
+          </i>
+          Noise:
+        </span>
+        <label for="noiseTypeDefault">
+          <input type="radio" id="noiseTypeDefault" name="noiseType" value="default" checked />
+          Default
+        </label>
+        <label for="noiseTypeCustom">
+          <input type="radio" id="noiseTypeCustom" name="noiseType" value="custom" />
+          Custom
+        </label>
+      </div>
+
+      <div class="row noise">
+        <span class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              Simplex Noise is the math function used to generate a random but smooth elevation accross the grid. You can tuned it if you want.
+            </span>
+          </i>
+          Shape:
+        </span>
+        <label for="noiseShapeFlat">
+          <input type="radio" id="noiseShapeFlat" name="noiseShape" value="flat" checked />
+          Flat
+        </label>
+        <label for="noiseShapeCylindrical">
+          <input type="radio" id="noiseShapeCylindrical" name="noiseShape" value="cylindrical" />
+          Cylindrical
+        </label>
+        <label for="noiseShapeSpherical">
+          <input type="radio" id="noiseShapeSpherical" name="noiseShape" value="spherical" />
+          Spherical
+        </label>
+      </div>
+
+      <div class="noise">
+        <div class="row noise-circumference">
+          <label for="inputNoiseCircumference" class="label">
+            Circumference:
+          </label>
+          <input type="number" id="inputNoiseCircumference" />
+        </div>
+      </div>
+
+      <div class="row noise">
+        <label for="inputNoiseAmplitude" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The maximum absolute value that a specific coherent-noise function can output. But value will be scale so no final height is greater than <code>1</code> and depending on the <strong>water</strong> parameter.
+            </span>
+          </i>
+          Amplitude:
+        </label>
+        <input type="number" id="inputNoiseAmplitude" />
+      </div>
+
+      <div class="row noise">
+        <label for="inputNoiseOctaves" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The final output you can see is actually the sum of several functions and each one is called an octave. Each octave has a greater frequency than the previous one, thus, the more octaves, the more details on the map.
+            </span>
+          </i>
+          Octaves:
+        </label>
+        <input type="number" id="inputNoiseOctaves" min="0" step="1" />
+      </div>
+
+      <div class="row noise">
+        <label for="inputNoiseFrequency" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The frequency determines how many changes occur along a unit length. Increasing the frequency will increase the number of terrain features (and also decrease the size of these features), decreasing it will render a smoother map.
+            </span>
+          </i>
+          Frequency:
+        </label>
+        <input type="number" id="inputNoiseFrequency" />
+      </div>
+
+      <div class="row noise">
+        <label for="inputNoisePersistence" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              A multiplier that determines how quickly the amplitudes diminish for each successive octave. Increasing the persistence value will create a rougher map, while decreasing the persistence value will create a smoother height map.
+            </span>
+          </i>
+          Persistence:
+        </label>
+        <input type="number" id="inputNoisePersistence" />
+      </div>
+
       <div class="row">
         <label id="labelWidth" for="inputWidth" class="label"></label>
         <input type="range" id="inputWidth" min="10" max="300" step="10" />
       </div>
+
       <div class="row">
         <label id="labelHeight" for="inputHeight" class="label"></label>
         <input type="range" id="inputHeight" min="10" max="300" step="10" />
       </div>
+
       <div class="row">
-        <label id="labelWater" for="inputWater" class="label"></label>
+        <label for="inputWater" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">The bigger <strong>water</strong>, the more water on the map. It is not a percentage, <code>0.2</code> does not mean there will be 20% of water.</span>
+          </i>
+          <span id="labelWater"></span>
+        </label>
         <input type="range" id="inputWater" min="0" max="1" step="0.1" />
       </div>
+
       <div class="row">
-        <span id="labelGridType" class="label">Grid type:</span>
+        <span id="labelGridType" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">
+              The grid type defines how to generate the cells. <strong>Voronoi</strong> is using the voronoi diagrams. <strong>Hexagons</strong> will generate a classic hexagonal grid with <code>width * height</code> hexagons.
+            </span>
+          </i>
+          Grid type:
+        </span>
         <label for="gridTypeVoronoi">
           <input type="radio" id="gridTypeVoronoi" name="gridType" value="voronoi" checked />
           Voronoi
@@ -43,16 +158,34 @@
           Hexagons
         </label>
       </div>
+
       <div class="row voronoi hidden">
-        <label id="labelVoronoiSites" for="inputVoronoiSites" class="label"></label>
+        <label for="inputVoronoiSites" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">The number of <strong>sites</strong> is the init number of cells inside the Voronoi diagram. Some might be removed depending on the <strong>relax</strong> parameter.</span>
+          </i>
+          <span id="labelVoronoiSites"></span>
+        </label>
         <input type="range" id="inputVoronoiSites" min="1000" max="15000" step="500" />
       </div>
+
       <div class="row voronoi hidden">
-        <label id="labelVoronoiRelax" for="inputVoronoiRelax" class="label"></label>
+        <label for="inputVoronoiRelax" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">The higher <strong>relax</strong>, the rounder the cells (some might be removed). Each relax iteration will slow down the generation process.</span>
+          </i>
+          <span id="labelVoronoiRelax"></span>
+        </label>
         <input type="range" id="inputVoronoiRelax" min="0" max="10" step="1" />
       </div>
+
       <div class="row">
-        <span class="label">Coasts:</span>
+        <span class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">You can specify if you want or not a <strong>coast</strong> on each side of the map. Having them all will generate an island.</span>
+          </i>
+          Coasts:
+        </span>
         <label for="inputCoastTop">
           <input type="checkbox" id="inputCoastTop" checked />
           Top
@@ -70,21 +203,17 @@
           Right
         </label>
       </div>
+
       <div>
         <button id="generater" type="button">Generate</button>
       </div>
-      <h2>Help</h2>
-      <p><strong>Width</strong> and <strong>height</strong> are the size of the map.</p>
-      <p>The bigger <strong>water</strong>, the more water on the map. It is not a percentage, <code>0.2</code> does not mean there will be 20% of water.</p>
-      <p>The grid type defines how to generate the cells. <strong>Voronoi</strong> is using the voronoi diagrams. <strong>Hexagons</strong> will generate a classic hexagonal grid with <code>width * height</code> hexagons.</p>
-      <p><strong>Voronoi</strong> grid can be tuned. The number of <strong>sites</strong> is the init number of cells. Then, the higher <strong>relax</strong>, the rounder the cells (some might be removed).</p>
-      <p>You can specify if you want or not a <strong>coast</strong> on each side of the map. Having them all will generate an island.</p>
+
       <h2>Author</h2>
       <p><a href="http://pauldijou.fr">Paul Dijou</a></p>
       <p><i class="fa fa-github" title="GitHub"></i> <a href="https://github.com/pauldijou">pauldijou</a></p>
       <p><i class="fa fa-twitter" title="Twitter"></i> <a href="https://twitter.com/paul_dijou">@paul_dijou</a></p>
     </div>
-    <script type="text/javascript" src="./bundle.js"></script>
+    <script type="text/javascript" src="./scripts.3481f8facea9266de59f0e24407da2bf.js"></script>
     <script type="text/javascript">
       WebFontConfig = {
         google: { families: [ 'Roboto::latin' ] }

@@ -50,51 +50,41 @@
 
 	var _index2 = _interopRequireDefault(_index);
 
+	var _elements = __webpack_require__(11);
+
+	var $ = _interopRequireWildcard(_elements);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	// Elements
-	function byId(id) {
-	  return document.getElementById(id);
+	// Global mutable YOLO stuff (told you it was dirty...)
+	// ---------------------------------
+	// Please, don't read this file...
+	// this is quick and dirty pure JavaScript
+	// in order to bind the demo UI to the generator
+	// ---------------------------------
+
+	var config = void 0;
+	var world = void 0;
+	var format = void 0;
+
+	// Default values
+	$.inputs.noise.circumference.value = 50;
+	$.inputs.noise.amplitude.value = 1;
+	$.inputs.noise.octaves.value = 6;
+	$.inputs.noise.frequency.value = 0.02;
+	$.inputs.noise.persistence.value = 0.2;
+
+	if ($.inputs.gridTypeVoronoi.checked) {
+	  $.inputs.height.value = 150;
+	} else {
+	  $.inputs.height.value = 60;
 	}
-
-	var $ = {
-	  generater: byId('generater'),
-	  refresher: byId('refresher'),
-	  opener: byId('opener'),
-	  closer: byId('closer'),
-	  configPanel: byId('config'),
-	  grid: byId('grid'),
-	  inputs: {
-	    width: byId('inputWidth'),
-	    height: byId('inputHeight'),
-	    water: byId('inputWater'),
-	    gridTypeVoronoi: byId('gridTypeVoronoi'),
-	    gridTypeHexagon: byId('gridTypeHexagon'),
-	    voronoi: {
-	      sites: byId('inputVoronoiSites'),
-	      relax: byId('inputVoronoiRelax')
-	    },
-	    coastTop: byId('inputCoastTop'),
-	    coastBottom: byId('inputCoastBottom'),
-	    coastLeft: byId('inputCoastLeft'),
-	    coastRight: byId('inputCoastRight')
-	  },
-	  labels: {
-	    width: byId('labelWidth'),
-	    height: byId('labelHeight'),
-	    water: byId('labelWater'),
-	    voronoi: {
-	      sites: byId('labelVoronoiSites'),
-	      relax: byId('labelVoronoiRelax')
-	    }
-	  },
-	  details: {
-	    voronoi: document.querySelectorAll('.voronoi'),
-	    hexagons: document.querySelectorAll('.hexagons')
-	  }
-	};
-
-	$.context = $.grid.getContext('2d');
+	$.inputs.width.value = $.inputs.height.value * window.innerWidth / window.innerHeight;
+	$.inputs.water.value = 0.2;
+	$.inputs.voronoi.sites.value = 7500;
+	$.inputs.voronoi.relax.value = 2;
 
 	// Events
 	$.generater.addEventListener('click', function () {
@@ -118,14 +108,9 @@
 	  input.addEventListener('input', updateUI);
 	});
 
-	[$.inputs.gridTypeVoronoi, $.inputs.gridTypeHexagon].forEach(function (input) {
+	[$.inputs.noiseTypeDefault, $.inputs.noiseTypeCustom, $.inputs.noise.shapeFlat, $.inputs.noise.shapeCylindrical, $.inputs.noise.shapeSpherical, $.inputs.gridTypeVoronoi, $.inputs.gridTypeHexagon].forEach(function (input) {
 	  input.addEventListener('change', updateUI);
 	});
-
-	// Default config
-	var config = void 0;
-	var world = void 0;
-	var format = void 0;
 
 	// Main
 	function resize() {
@@ -156,16 +141,7 @@
 	  grid.classList.remove('hide');
 	}
 
-	// Init
-	if ($.inputs.gridTypeVoronoi.checked) {
-	  $.inputs.height.value = 150;
-	} else {
-	  $.inputs.height.value = 60;
-	}
-	$.inputs.width.value = $.inputs.height.value * window.innerWidth / window.innerHeight;
-	$.inputs.water.value = 0.2;
-	$.inputs.voronoi.sites.value = 7500;
-	$.inputs.voronoi.relax.value = 2;
+	// Init UI
 	updateConfig();
 	updateUI();
 	refresh();
@@ -185,7 +161,18 @@
 	}
 
 	function updateUI() {
-	  console.log('UPDATE UI');
+	  if ($.inputs.noiseTypeCustom.checked) {
+	    forEachNode($.details.noise, show);
+	  } else {
+	    forEachNode($.details.noise, hide);
+	  }
+
+	  if ($.inputs.noise.shapeCylindrical.checked || $.inputs.noise.shapeSpherical.checked) {
+	    forEachNode($.details.noiseCircumference, show);
+	  } else {
+	    forEachNode($.details.noiseCircumference, hide);
+	  }
+
 	  $.labels.width.innerHTML = 'Width: ' + $.inputs.width.value;
 	  $.labels.height.innerHTML = 'Height: ' + $.inputs.height.value;
 	  $.labels.water.innerHTML = 'Water: ' + $.inputs.water.value;
@@ -225,6 +212,20 @@
 	    }
 	  };
 
+	  if ($.inputs.noiseTypeCustom.checked) {
+	    config.noise = {
+	      shape: $.inputs.noise.shapeCylindrical.checked && 'cylindrical' || $.inputs.noise.shapeSpherical.checked && 'spherical' || 'flat',
+	      amplitude: parseFloat($.inputs.noise.amplitude.value),
+	      octaves: parseInt($.inputs.noise.octaves.value, 10),
+	      frequency: parseFloat($.inputs.noise.frequency.value),
+	      persistence: parseFloat($.inputs.noise.persistence.value)
+	    };
+
+	    if ($.inputs.noise.shapeCylindrical.checked || $.inputs.noise.shapeSpherical.checked) {
+	      config.noise.circumference = $.inputs.noise.circumference.value;
+	    }
+	  }
+
 	  if ($.inputs.gridTypeVoronoi.checked) {
 	    format = formatVoronoi;
 	    config.voronoi = {
@@ -254,6 +255,13 @@
 
 	function drawCell(cell, ratios) {
 	  if (cell.ocean) {
+	    // if (cell.elevation < -0.95) {
+	    //   $.context.fillStyle = `rgba(180,71,10, 1)`;
+	    // } else if (cell.elevation < -0.5) {
+	    //   $.context.fillStyle = `rgba(13,200,15, ${Math.abs(cell.elevation)})`;
+	    // } else {
+	    //   $.context.fillStyle = `rgba(13,71,161, ${0.4 + Math.abs(cell.elevation)})`;
+	    // }
 	    $.context.fillStyle = 'rgba(13,71,161, ' + (0.4 + Math.abs(cell.elevation)) + ')';
 	  } else if (cell.elevation < 0) {
 	    $.context.fillStyle = '#2f9ceb';
@@ -336,11 +344,25 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	function cylindrical(noise, circumference) {
+	  return function cylindrical2D(x, y) {
+	    return noise.cylindrical2D(circumference, x, y);
+	  };
+	}
+
+	function spherical(noise, circumference) {
+	  return function spherical2D(x, y) {
+	    return noise.spherical2D(circumference, x, y);
+	  };
+	}
+
 	function generate() {
 	  var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
 	  var start = performance.now();
 
+	  var _options$noise = options.noise;
+	  var noiseConfig = _options$noise === undefined ? {} : _options$noise;
 	  var width = options.width;
 	  var height = options.height;
 	  var _options$coasts = options.coasts;
@@ -359,14 +381,16 @@
 
 	  var distance = !voronoi && shape === 'hexagon' ? Maths.distanceHexagon2D : Maths.distanceSquare2D;
 
-	  var noise = new _fastSimplexNoise2.default({
+	  var noise = new _fastSimplexNoise2.default(Object.assign({
 	    min: -water,
 	    max: 1,
 	    // amplitude: 0.2,
 	    octaves: 6,
 	    frequency: 0.03,
 	    persistence: 0.2
-	  });
+	  }, noiseConfig));
+
+	  var noiser = noise.shape === 'cylindrical' && noise.cylindrical2D.bind(noise, noiseConfig.circumference) || noise.shape === 'spherical' && noise.spherical2D.bind(noise, noiseConfig.circumference) || noise.in2D.bind(noise);
 
 	  var hasCoast = coasts.left || coasts.top || coasts.bottom || coasts.right;
 	  var coastElv = hasCoast ? (0, _water.coastElevation)({ width: width, height: height, coasts: coasts, distance: distance }) : function () {
@@ -379,7 +403,8 @@
 
 	  // Assign elevations
 	  grid.cells.forEach(function (cell) {
-	    cell.elevation = noise.in2D(cell.x, cell.y) - coastElv(cell.x, cell.y);
+	    // cell.elevation = - coastElv(cell.x, cell.y);
+	    cell.elevation = noiser(cell.x, cell.y) - coastElv(cell.x, cell.y);
 	  });
 
 	  grid.edges.forEach(function (edge) {
@@ -1078,6 +1103,26 @@
 	  });
 	}
 
+	// 0 | 1
+	// -----
+	// 3 | 2
+	function getQuartile(x, y, cx, cy) {
+	  if (x < cx) {
+	    return y < cy ? 0 : 3;
+	  } else {
+	    return y < cy ? 1 : 2;
+	  }
+	}
+
+	function getEllipsis(cx, cy) {
+	  var a = Math.pow(1 / cx, 2);
+	  var b = Math.pow(1 / cy, 2);
+
+	  return function ellipsis(x, y) {
+	    return a * Math.pow(x - cx, 2) + b * Math.pow(y - cy, 2);
+	  };
+	}
+
 	function coastElevation(_ref) {
 	  var width = _ref.width;
 	  var height = _ref.height;
@@ -1087,16 +1132,80 @@
 	  var cx = width / 2;
 	  var cy = height / 2;
 
+	  var none = function none() {
+	    return 0;
+	  };
+	  var ellipsis = getEllipsis(cx, cy);
+	  var linearVertical = function linearVertical(x, y) {
+	    return Math.pow((y - cy) / cy, 2);
+	  };
+	  var linearHorizontal = function linearHorizontal(x, y) {
+	    return Math.pow((x - cx) / cx, 2);
+	  };
+
+	  var quartiles = [];
+
+	  // 0: top left
+	  quartiles.push(coasts.top && coasts.left && ellipsis || coasts.top && linearVertical || coasts.left && linearHorizontal || none);
+
+	  // 1: top right
+	  quartiles.push(coasts.top && coasts.right && ellipsis || coasts.top && linearVertical || coasts.right && linearHorizontal || none);
+
+	  // 2: bottom right
+	  quartiles.push(coasts.bottom && coasts.right && ellipsis || coasts.bottom && linearVertical || coasts.right && linearHorizontal || none);
+
+	  // 3: bottom left
+	  quartiles.push(coasts.bottom && coasts.left && ellipsis || coasts.bottom && linearVertical || coasts.left && linearHorizontal || none);
+
+	  return function (x, y) {
+	    // return Math.pow(1.05 * quartiles[getQuartile(x, y, cx, cy)](x, y), 2);
+	    return 1.05 * Math.pow(Math.sqrt(quartiles[getQuartile(x, y, cx, cy)](x, y)), 3);
+	  };
+
 	  // FIXME center tile always return 0 => always keep water
 	  // FIXME ponderate if width !== height
-	  return function (x, y) {
-	    return Math.pow(distance(coasts.left && x < cx || coasts.right && x >= cx ? x : cx, coasts.top && y < cy || coasts.bottom && y >= cy ? y : cy, cx, cy) / Math.min(cx, cy), 3);
-	  };
+	  // return function (x, y) {
+	  //   return Math.pow(distance(
+	  //     (coasts.left && x < cx) || (coasts.right && x >= cx) ? x : cx,
+	  //     (coasts.top && y < cy) || (coasts.bottom && y >= cy) ? y : cy,
+	  //     cx,
+	  //     cy
+	  //   ) / Math.min(cx, cy), 3);
+	  // }
+
+	  // return function (x, y) {
+	  //   const isHorizontal = Math.abs(x - cx) / cx > Math.abs(y - cy) / cy;
+	  //
+	  //   if (
+	  //     (isHorizontal && coasts.left && x < cx) ||
+	  //     (isHorizontal && coasts.right && x >= cx) ||
+	  //     (!isHorizontal && coasts.top && y < cy) ||
+	  //     (!isHorizontal && coasts.bottom && y >= cy)
+	  //   ) {
+	  //     return Math.pow(
+	  //       Math.max(Math.abs(x - cx) / cx, Math.abs(y - cy) / cy)
+	  //     , 3);
+	  //   } else {
+	  //     return 0;
+	  //   }
+	  // }
 	}
 
 	function tagOcean(cells, width, height, coasts, distance) {
 	  var starts = [];
 
+	  var distTop = function distTop(cell) {
+	    return distance(width / 2, 0, cell.x, cell.y);
+	  };
+	  var distBottom = function distBottom(cell) {
+	    return distance(width / 2, height, cell.x, cell.y);
+	  };
+	  var distLeft = function distLeft(cell) {
+	    return distance(0, height / 2, cell.x, cell.y);
+	  };
+	  var distRight = function distRight(cell) {
+	    return distance(width, height / 2, cell.x, cell.y);
+	  };
 	  var distTopLeft = function distTopLeft(cell) {
 	    return distance(0, 0, cell.x, cell.y);
 	  };
@@ -1110,7 +1219,19 @@
 	    return distance(width, height, cell.x, cell.y);
 	  };
 
-	  var _cells$reduce = cells.reduce(function (res, cell) {
+	  var starters = cells.reduce(function (res, cell) {
+	    if (distTop(cell) < distTop(res.top)) {
+	      res.top = cell;
+	    }
+	    if (distBottom(cell) < distBottom(res.bottom)) {
+	      res.bottom = cell;
+	    }
+	    if (distLeft(cell) < distLeft(res.left)) {
+	      res.left = cell;
+	    }
+	    if (distRight(cell) < distRight(res.right)) {
+	      res.right = cell;
+	    }
 	    if (distTopLeft(cell) < distTopLeft(res.topLeft)) {
 	      res.topLeft = cell;
 	    }
@@ -1125,39 +1246,38 @@
 	    }
 	    return res;
 	  }, {
+	    top: cells[0], right: cells[0], left: cells[0], bottom: cells[0],
 	    topLeft: cells[0], topRight: cells[0], bottomLeft: cells[0], bottomRight: cells[0]
 	  });
 
-	  var topLeft = _cells$reduce.topLeft;
-	  var topRight = _cells$reduce.topRight;
-	  var bottomLeft = _cells$reduce.bottomLeft;
-	  var bottomRight = _cells$reduce.bottomRight;
-
-
 	  if (coasts.top) {
-	    starts.push(topLeft);
-	    starts.push(topRight);
+	    starts.push(starters.top);
+	    starts.push(starters.topLeft);
+	    starts.push(starters.topRight);
 	  }
 	  if (coasts.bottom) {
-	    starts.push(bottomLeft);
-	    starts.push(bottomRight);
+	    starts.push(starters.bottom);
+	    starts.push(starters.bottomLeft);
+	    starts.push(starters.bottomRight);
 	  }
 	  if (coasts.left) {
-	    starts.push(topLeft);
-	    starts.push(bottomLeft);
+	    starts.push(starters.left);
+	    starts.push(starters.topLeft);
+	    starts.push(starters.bottomLeft);
 	  }
 	  if (coasts.right) {
-	    starts.push(topRight);
-	    starts.push(bottomRight);
+	    starts.push(starters.right);
+	    starts.push(starters.topRight);
+	    starts.push(starters.bottomRight);
 	  }
 
-	  var deeper = 0;
+	  // let deeper = 0;
 	  var ocean = starts.filter(isWater).map(function (t) {
 	    t.ocean = true;return t;
 	  });
 	  while (ocean.length) {
 	    var next = ocean.shift();
-	    deeper = Math.min(deeper, next.elevation);
+	    // deeper = Math.min(deeper, next.elevation);
 	    next.neighbors.forEach(function (cell) {
 	      if (cell && cell.ocean === undefined) {
 	        cell.ocean = isWater(cell);
@@ -1168,12 +1288,14 @@
 	    });
 	  }
 
-	  deeper = Math.abs(deeper);
-	  cells.filter(function (c) {
-	    return c.ocean;
-	  }).forEach(function (cell) {
-	    cell.elevation /= deeper;
-	  });
+	  // deeper = Math.abs(deeper);
+	  // cells.filter(c => c.ocean).forEach(cell => {
+	  //   cell.elevation /= deeper;
+	  //   // Ensure that coast boarder will be -1 to compensate any land
+	  //   if (cell.elevation < -0.85) {
+	  //     cell.elevation = -1;
+	  //   }
+	  // });
 	}
 
 	function removeCoastalLakes(cells, coastElv) {
@@ -3385,6 +3507,72 @@
 
 	if(true) module.exports = Voronoi;
 
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	function byId(id) {
+	  return document.getElementById(id);
+	}
+
+	var generater = exports.generater = byId('generater');
+	var refresher = exports.refresher = byId('refresher');
+	var opener = exports.opener = byId('opener');
+	var closer = exports.closer = byId('closer');
+	var configPanel = exports.configPanel = byId('config');
+	var grid = exports.grid = byId('grid');
+	var context = exports.context = grid.getContext('2d');
+
+	var inputs = exports.inputs = {
+	  noiseTypeDefault: byId('noiseTypeDefault'),
+	  noiseTypeCustom: byId('noiseTypeCustom'),
+	  noise: {
+	    shapeFlat: byId('noiseShapeFlat'),
+	    shapeCylindrical: byId('noiseShapeCylindrical'),
+	    shapeSpherical: byId('noiseShapeSpherical'),
+	    circumference: byId('inputNoiseCircumference'),
+	    amplitude: byId('inputNoiseAmplitude'),
+	    octaves: byId('inputNoiseOctaves'),
+	    frequency: byId('inputNoiseFrequency'),
+	    persistence: byId('inputNoisePersistence')
+	  },
+	  width: byId('inputWidth'),
+	  height: byId('inputHeight'),
+	  water: byId('inputWater'),
+	  gridTypeVoronoi: byId('gridTypeVoronoi'),
+	  gridTypeHexagon: byId('gridTypeHexagon'),
+	  voronoi: {
+	    sites: byId('inputVoronoiSites'),
+	    relax: byId('inputVoronoiRelax')
+	  },
+	  coastTop: byId('inputCoastTop'),
+	  coastBottom: byId('inputCoastBottom'),
+	  coastLeft: byId('inputCoastLeft'),
+	  coastRight: byId('inputCoastRight')
+	};
+
+	var labels = exports.labels = {
+	  width: byId('labelWidth'),
+	  height: byId('labelHeight'),
+	  water: byId('labelWater'),
+	  voronoi: {
+	    sites: byId('labelVoronoiSites'),
+	    relax: byId('labelVoronoiRelax')
+	  }
+	};
+
+	var details = exports.details = {
+	  noise: document.querySelectorAll('.noise'),
+	  noiseCircumference: document.querySelectorAll('.noise-circumference'),
+	  voronoi: document.querySelectorAll('.voronoi'),
+	  hexagons: document.querySelectorAll('.hexagons')
+	};
 
 /***/ }
 /******/ ]);

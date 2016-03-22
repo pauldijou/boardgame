@@ -92,8 +92,50 @@ a, a:visited, a:active {
 }
 
 .label {
-  min-width: 100px;
+  min-width: 120px;
   display: inline-block;
+}
+
+.label .fa-question-circle {
+  margin-right: 5px;
+  cursor: help;
+  position: relative;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  top: -20px;
+  right: 200%;
+  width: 300px;
+  background-color: white;
+  padding: 10px;
+  border: 3px solid black;
+  border-radius: 5px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  line-height: normal;
+}
+
+.tooltip::before, .tooltip::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 100%;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid white;
+}
+
+.tooltip::before {
+  border-left-color: black;
+  transform: translateX(3px);
+}
+
+.label .fa-question-circle:hover .tooltip {
+  display: block;
 }
 
 #generater {
