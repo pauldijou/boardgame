@@ -1,5 +1,5 @@
 export function isWater(tile) {
-  return tile.elevation < 0;
+  return tile.water;
 }
 
 export function filterWater(tiles) {
@@ -30,9 +30,13 @@ function getEllipsis(cx, cy) {
   };
 }
 
-export function coastElevation({ width, height, coasts, distance }) {
+export function coastElevation({ width, height, coasts, distance, grid }) {
   const cx = width / 2;
   const cy = height / 2;
+
+  const higher = grid.cells.reduce((high, cell) =>
+    Math.max(high, cell.elevation)
+  , 0);
 
   const none = () => 0;
   const ellipsis = getEllipsis(cx, cy);
@@ -75,36 +79,8 @@ export function coastElevation({ width, height, coasts, distance }) {
 
   return function (x, y) {
     // return Math.pow(1.05 * quartiles[getQuartile(x, y, cx, cy)](x, y), 2);
-    return 1.05 * Math.pow(Math.sqrt(quartiles[getQuartile(x, y, cx, cy)](x, y)), 3);
+    return 1.05 * higher * Math.pow(Math.sqrt(quartiles[getQuartile(x, y, cx, cy)](x, y)), 3);
   }
-
-  // FIXME center tile always return 0 => always keep water
-  // FIXME ponderate if width !== height
-  // return function (x, y) {
-  //   return Math.pow(distance(
-  //     (coasts.left && x < cx) || (coasts.right && x >= cx) ? x : cx,
-  //     (coasts.top && y < cy) || (coasts.bottom && y >= cy) ? y : cy,
-  //     cx,
-  //     cy
-  //   ) / Math.min(cx, cy), 3);
-  // }
-
-  // return function (x, y) {
-  //   const isHorizontal = Math.abs(x - cx) / cx > Math.abs(y - cy) / cy;
-  //
-  //   if (
-  //     (isHorizontal && coasts.left && x < cx) ||
-  //     (isHorizontal && coasts.right && x >= cx) ||
-  //     (!isHorizontal && coasts.top && y < cy) ||
-  //     (!isHorizontal && coasts.bottom && y >= cy)
-  //   ) {
-  //     return Math.pow(
-  //       Math.max(Math.abs(x - cx) / cx, Math.abs(y - cy) / cy)
-  //     , 3);
-  //   } else {
-  //     return 0;
-  //   }
-  // }
 }
 
 export function tagOcean(cells, width, height, coasts, distance) {
@@ -155,11 +131,9 @@ export function tagOcean(cells, width, height, coasts, distance) {
     starts.push(starters.bottomRight);
   }
 
-  // let deeper = 0;
   const ocean = starts.filter(isWater).map(t => { t.ocean = true; return t; });
   while(ocean.length) {
     const next = ocean.shift();
-    // deeper = Math.min(deeper, next.elevation);
     next.neighbors.forEach(cell => {
       if (cell && cell.ocean === undefined) {
         cell.ocean = isWater(cell);
@@ -169,50 +143,18 @@ export function tagOcean(cells, width, height, coasts, distance) {
       }
     });
   }
-
-  // deeper = Math.abs(deeper);
-  // cells.filter(c => c.ocean).forEach(cell => {
-  //   cell.elevation /= deeper;
-  //   // Ensure that coast boarder will be -1 to compensate any land
-  //   if (cell.elevation < -0.85) {
-  //     cell.elevation = -1;
-  //   }
-  // });
 }
 
+// Because coast elevation will decrease the elevation aroudn coasts,
+// it will create a higher probably of lakes near coasts. That's too much
+// water at the same place. So, for now, we will remove all lakes in
+// which might have been created due to coast elevation
 export function removeCoastalLakes(cells, coastElv) {
   filterWater(cells).forEach(cell => {
-    if (!cell.ocean && coastElv(cell.x, cell.y) > 0) {
-      cell.elevation = 0.01;
+    if (!cell.ocean && coastElv(cell.x, cell.y) !== 0) {
+      cell.water = false;
+      // We cannot reverse the coast elevation because all cells around
+      // have also been impacted by it
     }
   });
-}
-
-export function normalizeWaterLevel(tiles, water) {
-  // debug
-  for(let i = 0; i < 1; i += 0.1) {
-    console.log(i, '->', i+0.1, ':', tiles.filter(t => t.elevation >= i && t.elevation < i+0.1).length / tiles.length * 100);
-  }
-
-  // Regulate water percentage
-  let maxHeight = 1;
-  let waterPercentage = filterWater(tiles).length / tiles.length;
-  const waterStep = 0.01;
-
-  if (waterPercentage < water) {
-    while(waterPercentage < water) {
-      maxHeight -= waterStep;
-      tiles.forEach(tile => tile.elevation -= waterStep);
-      waterPercentage = filterWater(tiles).length / tiles.length;
-    }
-  } else {
-    while(waterPercentage > water) {
-      maxHeight += waterStep;
-      tiles.forEach(tile => tile.elevation += waterStep);
-      waterPercentage = filterWater(tiles).length / tiles.length;
-    }
-  }
-
-  // Normalize height
-  tiles.forEach(tile => tile.elevation /= maxHeight);
 }

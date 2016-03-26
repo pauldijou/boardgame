@@ -110,7 +110,7 @@ function relaxDiagram(voronoi, diagram, width, height) {
 }
 
 function normalizeDiagram(diagram) {
-  diagram.cells.forEach(cell => {
+  diagram.cells.forEach((cell, idx) => {
     cell.site.cell = cell;
     cell.x = cell.site.x;
     cell.y = cell.site.y;
@@ -122,7 +122,7 @@ function normalizeDiagram(diagram) {
     });
   });
 
-  diagram.edges.forEach(edge => {
+  diagram.edges.forEach((edge, idx) => {
     const lCell = edge.lSite && edge.lSite.cell;
     const rCell = edge.rSite && edge.rSite.cell;
     if (lCell && rCell) {

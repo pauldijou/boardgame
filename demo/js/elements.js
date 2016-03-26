@@ -2,6 +2,15 @@ function byId(id) {
   return document.getElementById(id)
 }
 
+export function show(elem) { elem.classList.remove('hidden'); }
+export function hide(elem) { elem.classList.add('hidden'); }
+
+export function forEachNode(nodes, func) {
+  for (let i = 0, l = nodes.length; i < l; ++i) {
+    func(nodes[i]);
+  }
+}
+
 export const generater = byId('generater');
 export const refresher = byId('refresher');
 export const opener = byId('opener');
@@ -25,23 +34,27 @@ export const inputs = {
   },
   width: byId('inputWidth'),
   height: byId('inputHeight'),
-  water: byId('inputWater'),
+  max: byId('inputMax'),
+  min: byId('inputMin'),
   gridTypeVoronoi: byId('gridTypeVoronoi'),
   gridTypeHexagon: byId('gridTypeHexagon'),
   voronoi: {
     sites: byId('inputVoronoiSites'),
     relax: byId('inputVoronoiRelax'),
   },
-  coastTop: byId('inputCoastTop'),
-  coastBottom: byId('inputCoastBottom'),
-  coastLeft: byId('inputCoastLeft'),
-  coastRight: byId('inputCoastRight'),
+  coasts: {
+    top: byId('inputCoastTop'),
+    bottom: byId('inputCoastBottom'),
+    left: byId('inputCoastLeft'),
+    right: byId('inputCoastRight'),
+  },
 };
 
 export const labels = {
   width: byId('labelWidth'),
   height: byId('labelHeight'),
-  water: byId('labelWater'),
+  max: byId('labelMax'),
+  min: byId('labelMin'),
   voronoi: {
     sites: byId('labelVoronoiSites'),
     relax: byId('labelVoronoiRelax'),

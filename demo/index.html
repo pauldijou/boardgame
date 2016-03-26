@@ -31,7 +31,7 @@
           Noise:
         </span>
         <label for="noiseTypeDefault">
-          <input type="radio" id="noiseTypeDefault" name="noiseType" value="default" checked />
+          <input type="radio" id="noiseTypeDefault" name="noiseType" value="default" />
           Default
         </label>
         <label for="noiseTypeCustom">
@@ -50,7 +50,7 @@
           Shape:
         </span>
         <label for="noiseShapeFlat">
-          <input type="radio" id="noiseShapeFlat" name="noiseShape" value="flat" checked />
+          <input type="radio" id="noiseShapeFlat" name="noiseShape" value="flat" />
           Flat
         </label>
         <label for="noiseShapeCylindrical">
@@ -131,13 +131,23 @@
       </div>
 
       <div class="row">
-        <label for="inputWater" class="label">
+        <label for="inputMax" class="label">
           <i class="fa fa-question-circle">
-            <span class="tooltip">The bigger <strong>water</strong>, the more water on the map. It is not a percentage, <code>0.2</code> does not mean there will be 20% of water.</span>
+            <span class="tooltip">The noise function will generate a map with an elevetation between <strong>min</strong> and <strong>max</strong>. After that, all cells with a negative elevation will be considered as <strong>water</strong>.</span>
           </i>
-          <span id="labelWater"></span>
+          <span id="labelMax"></span>
         </label>
-        <input type="range" id="inputWater" min="0" max="1" step="0.1" />
+        <input type="range" id="inputMax" min="0" max="3" step="0.1" />
+      </div>
+
+      <div class="row">
+        <label for="inputMin" class="label">
+          <i class="fa fa-question-circle">
+            <span class="tooltip">The noise function will generate a map with an elevetation between <strong>min</strong> and <strong>max</strong>. After that, all cells with a negative elevation will be considered as <strong>water</strong>.</span>
+          </i>
+          <span id="labelMin"></span>
+        </label>
+        <input type="range" id="inputMin" min="-3" max="0" step="0.1" />
       </div>
 
       <div class="row">
@@ -150,7 +160,7 @@
           Grid type:
         </span>
         <label for="gridTypeVoronoi">
-          <input type="radio" id="gridTypeVoronoi" name="gridType" value="voronoi" checked />
+          <input type="radio" id="gridTypeVoronoi" name="gridType" value="voronoi" />
           Voronoi
         </label>
         <label for="gridTypeHexagon">
@@ -182,24 +192,24 @@
       <div class="row">
         <span class="label">
           <i class="fa fa-question-circle">
-            <span class="tooltip">You can specify if you want or not a <strong>coast</strong> on each side of the map. Having them all will generate an island.</span>
+            <span class="tooltip">You can specify if you want or not a <strong>coast</strong> on each side of the map, this will smoothly reduce cell evelation in each checked side to ensure ocean water. Having them all will generate an island.</span>
           </i>
           Coasts:
         </span>
         <label for="inputCoastTop">
-          <input type="checkbox" id="inputCoastTop" checked />
+          <input type="checkbox" id="inputCoastTop" />
           Top
         </label>
         <label for="inputCoastBottom">
-          <input type="checkbox" id="inputCoastBottom" checked />
+          <input type="checkbox" id="inputCoastBottom" />
           Bottom
         </label>
         <label for="inputCoastLeft">
-          <input type="checkbox" id="inputCoastLeft" checked />
+          <input type="checkbox" id="inputCoastLeft" />
           Left
         </label>
         <label for="inputCoastRight">
-          <input type="checkbox" id="inputCoastRight" checked />
+          <input type="checkbox" id="inputCoastRight" />
           Right
         </label>
       </div>

@@ -1,47 +1,72 @@
 // Schema
 // {
 // vertices: [{x, y}, ...],
-// edges: [{v1: Vertex, v1: Vertex, c1: Cell, c2: Cell}],
+// edges: [{v1: VertexId, v1: VertexId, c1: CellId, c2: CellId}],
 // cells: [{
 //   x,
 //   y,
-//   neighbors: [Cell, ...],
-//   edges: [{start: Vertex, end: Vertex, edge: Edge}, ...]
+//   neighbors: [CellId, ...],
+//   edges: [{id: EdgeId, start: VertexId, end: VertexId, neighbor: CellId}, ...]
 // }, ...]
 // }
 
-function isVertex(vertex) {
-  return vertex && (typeof vertex.x === 'number') && (typeof vertex.y === 'number');
+function isVertexIdCreator(grid) {
+  const length = grid.vertices.length;
+  return function (id) {
+    return (typeof id === 'number') && (id < length);
+  }
+}
+
+function isEdgeIdCreator(grid) {
+  const length = grid.edges.length;
+  return function (id) {
+    return (typeof id === 'number') && (id < length);
+  }
+}
+
+function isCellIdCreator(grid) {
+  const length = grid.cells.length;
+  return function (id) {
+    return (typeof id === 'number') && (id < length);
+  }
+}
+
+function isVertex(vertex, { isVertexId }) {
+  return vertex && isVertexId(vertex.id) && (typeof vertex.x === 'number') && (typeof vertex.y === 'number');
 }
 
 function hasVertices(grid) {
   return Array.isArray(grid.vertices) && grid.vertices.every(isVertex);
 }
 
-function isCell(cell) {
-  return cell && Array.isArray(cell.edges) && cell.edges.every(isOrientedEdge)
-    && (typeof cell.x === 'number') && (typeof cell.y === 'number') && Array.isArray(cell.neighbors) && cell.neighbors.length > 0;
+function isCell(cell, options) {
+  return cell && options.isCellId(cell.id) && Array.isArray(cell.edges) && cell.edges.every(e => isOrientedEdge(e, options)) && (typeof cell.x === 'number') && (typeof cell.y === 'number') && Array.isArray(cell.neighbors) && cell.neighbors.length > 0 && cell.neighbors.every(options.isCellId);
 }
 
-function hasCells(grid) {
-  return Array.isArray(grid.cells) && grid.cells.every(isCell);
+function hasCells(grid, options) {
+  return Array.isArray(grid.cells) && grid.cells.every(c => isCell(c, options));
 }
 
-function isOrientedEdge(edge) {
-  return edge && isVertex(edge.start) && isVertex(edge.end) && isEdge(edge.edge);
+function isOrientedEdge(edge, { isVertexId, isEdgeId }) {
+  return edge && isEdgeId(edge.id) && isVertexId(edge.start) && isVertexId(edge.end) && isEdgeId(edge.neighbor);
 }
 
-function isEdge(edge) {
-  return edge && isVertex(edge.v1) && isVertex(edge.v2);
+function isEdge(edge, { isVertexId }) {
+  return edge && isEdgeId(edge.id) && isVertexId(edge.v1) && isVertexId(edge.v2);
 }
 
-function hasEdges(grid) {
-  return Array.isArray(grid.edges) && grid.edges.every(isEdge);
+function hasEdges(grid, options) {
+  return Array.isArray(grid.edges) && grid.edges.every(e => isEdge(e, options));
 }
 
 export default function validate(grid) {
+  const options = {
+    isVertexId: isVertexIdCreator(grid),
+    isEdgeId: isEdgeIdCreator(grid),
+    isCellId: isCellIdCreator(grid),
+  };
   return (typeof grid === 'object')
-    && hasVertices(grid)
-    && hasCells(grid)
-    && hasEdges(grid);
+    && hasVertices(grid, options)
+    && hasCells(grid, options)
+    && hasEdges(grid, options);
 }

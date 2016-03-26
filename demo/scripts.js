@@ -7,30 +7,73 @@
 import generate from '../src/generator/index.js';
 
 import * as $ from './js/elements';
+import draw from './js/draw';
 
 // Global mutable YOLO stuff (told you it was dirty...)
-let config;
+let config = {};
 let world;
-let format;
+
+try {
+  const params = {};
+  const searches = location.search.substr(1).split('=');
+  for (let i = 0; i < searches.length; i += 2) {
+    params[decodeURIComponent(searches[i])] = decodeURIComponent(searches[i + 1]);
+  }
+
+  if (params.config) {
+    config = JSON.parse(params.config);
+  }
+} catch (e) {
+
+}
+
+function defaultConfig(key, fallback) {
+  return key.split('.').reduce((res, part) => {
+    if (res !== undefined && res[part] !== undefined) {
+      return res[part];
+    }
+    return fallback;
+  }, config);
+}
 
 // Default values
-$.inputs.noise.circumference.value = 50;
-$.inputs.noise.amplitude.value = 1;
-$.inputs.noise.octaves.value = 6;
-$.inputs.noise.frequency.value = 0.02;
-$.inputs.noise.persistence.value = 0.2;
+$.inputs.noiseTypeDefault.checked = !config.noise;
+$.inputs.noiseTypeCustom.checked = !!config.noise;
+$.inputs.noise.shapeFlat.checked = !config.noise || config.noise.shape === 'flat';
+$.inputs.noise.shapeCylindrical.checked = config.noise && config.noise.shape === 'cylindrical';
+$.inputs.noise.shapeSpherical.checked = config.noise && config.noise.shape === 'spherical';
+$.inputs.noise.circumference.value = defaultConfig('noise.circumference', 50);
+$.inputs.noise.amplitude.value = defaultConfig('noise.amplitude', 1);
+$.inputs.noise.octaves.value = defaultConfig('noise.octaves', 6);
+$.inputs.noise.frequency.value = defaultConfig('noise.frequency', 0.02);
+$.inputs.noise.persistence.value = defaultConfig('noise.persistence', 0.2);
 
 if ($.inputs.gridTypeVoronoi.checked) {
-  $.inputs.height.value = 150;
+  $.inputs.height.value = defaultConfig('height', 150);
 } else {
-  $.inputs.height.value = 60;
+  $.inputs.height.value = defaultConfig('height', 60);
 }
-$.inputs.width.value = $.inputs.height.value * window.innerWidth / window.innerHeight;
-$.inputs.water.value = 0.2;
-$.inputs.voronoi.sites.value = 7500;
-$.inputs.voronoi.relax.value = 2;
+$.inputs.width.value = defaultConfig('width', $.inputs.height.value * window.innerWidth / window.innerHeight);
+$.inputs.max.value = defaultConfig('max', 1);
+$.inputs.min.value = defaultConfig('min', -0.2);
+$.inputs.gridTypeHexagon.checked = config.shape === 'hexagon';
+$.inputs.gridTypeVoronoi.checked = !!config.voronoi;
+$.inputs.voronoi.sites.value = defaultConfig('voronoi.sites', 7500);
+$.inputs.voronoi.relax.value = defaultConfig('voronoi.relax', 2);
+$.inputs.coasts.top.checked = defaultConfig('coasts.top', true);
+$.inputs.coasts.bottom.checked = defaultConfig('coasts.bottom', true);
+$.inputs.coasts.left.checked = defaultConfig('coasts.left', true);
+$.inputs.coasts.right.checked = defaultConfig('coasts.right', true);
+
+// Init UI
+updateConfig();
+updateUI();
+refresh();
 
 // Events
+function openConfig() { $.configPanel.classList.add('open'); }
+function closeConfig() { $.configPanel.classList.remove('open'); }
+
 $.generater.addEventListener('click', () => {
   updateConfig();
   refresh();
@@ -38,20 +81,17 @@ $.generater.addEventListener('click', () => {
 
 $.refresher.addEventListener('click', refresh, false);
 
-$.opener.addEventListener('click', () => {
-  $.configPanel.classList.add('open');
-}, false);
-
-$.closer.addEventListener('click', () => {
-  $.configPanel.classList.remove('open');
-}, false);
+$.opener.addEventListener('click', openConfig, false);
+$.closer.addEventListener('click', closeConfig, false);
+$.grid.addEventListener('click', closeConfig, false);
 
 window.addEventListener('resize', resize, false);
 
 [
   $.inputs.width,
   $.inputs.height,
-  $.inputs.water,
+  $.inputs.max,
+  $.inputs.min,
   $.inputs.voronoi.sites,
   $.inputs.voronoi.relax,
 ].forEach(input => {
@@ -74,7 +114,7 @@ window.addEventListener('resize', resize, false);
 function resize() {
   grid.width = window.innerWidth;
   grid.height = window.innerHeight;
-  draw();
+  draw(world, config);
 }
 
 function refresh() {
@@ -96,53 +136,40 @@ function refresh() {
     }
   }
   resize();
+  history.pushState({}, 'boardgame', '?config=' + JSON.stringify(config));
   grid.classList.remove('hide');
-}
-
-// Init UI
-updateConfig();
-updateUI();
-refresh();
-
-// Config
-function show(elem) { elem.classList.remove('hidden'); }
-function hide(elem) { elem.classList.add('hidden'); }
-
-function forEachNode(nodes, func) {
-  for (let i = 0, l = nodes.length; i < l; ++i) {
-    func(nodes[i]);
-  }
 }
 
 function updateUI() {
   if ($.inputs.noiseTypeCustom.checked) {
-    forEachNode($.details.noise, show);
+    $.forEachNode($.details.noise, $.show);
   } else {
-    forEachNode($.details.noise, hide);
+    $.forEachNode($.details.noise, $.hide);
   }
 
   if($.inputs.noise.shapeCylindrical.checked
     || $.inputs.noise.shapeSpherical.checked) {
-    forEachNode($.details.noiseCircumference, show);
+    $.forEachNode($.details.noiseCircumference, $.show);
   } else {
-    forEachNode($.details.noiseCircumference, hide);
+    $.forEachNode($.details.noiseCircumference, $.hide);
   }
 
   $.labels.width.innerHTML = `Width: ${$.inputs.width.value}`;
   $.labels.height.innerHTML = `Height: ${$.inputs.height.value}`;
-  $.labels.water.innerHTML = `Water: ${$.inputs.water.value}`;
+  $.labels.max.innerHTML = `Max: ${$.inputs.max.value}`;
+  $.labels.min.innerHTML = `Min: ${$.inputs.min.value}`;
   $.labels.voronoi.sites.innerHTML = `Sites: ${$.inputs.voronoi.sites.value}`;
   $.labels.voronoi.relax.innerHTML = `Relax: ${$.inputs.voronoi.relax.value}`;
 
   if ($.inputs.gridTypeVoronoi.checked) {
-    forEachNode($.details.voronoi, show);
+    $.forEachNode($.details.voronoi, $.show);
   } else {
-    forEachNode($.details.voronoi, hide);
+    $.forEachNode($.details.voronoi, $.hide);
   }
   if ($.inputs.gridTypeHexagon.checked) {
-    forEachNode($.details.hexagons, show);
+    $.forEachNode($.details.hexagons, $.show);
   } else {
-    forEachNode($.details.hexagons, hide);
+    $.forEachNode($.details.hexagons, $.hide);
   }
 }
 
@@ -150,21 +177,22 @@ function updateConfig() {
   config = {
     width: parseInt($.inputs.width.value, 10),
     height: parseInt($.inputs.height.value, 10),
-    water: parseFloat($.inputs.water.value),
+    max: parseFloat($.inputs.max.value),
+    min: parseFloat($.inputs.min.value),
     coasts: {
-      top: $.inputs.coastTop.checked,
-      bottom: $.inputs.coastBottom.checked,
-      left: $.inputs.coastLeft.checked,
-      right: $.inputs.coastRight.checked
+      top: $.inputs.coasts.top.checked,
+      bottom: $.inputs.coasts.bottom.checked,
+      left: $.inputs.coasts.left.checked,
+      right: $.inputs.coasts.right.checked
     },
     rivers: {
       number: 10,
       minHeight: 0.6
     },
-    volcanos: {
-      number: 2,
-      minHeight: 0.8
-    }
+    // volcanos: {
+    //   number: 2,
+    //   minHeight: 0.8
+    // }
   };
 
   if ($.inputs.noiseTypeCustom.checked) {
@@ -184,84 +212,13 @@ function updateConfig() {
     }
   }
 
-
   if ($.inputs.gridTypeVoronoi.checked) {
-    format = formatVoronoi;
     config.voronoi = {
+      shape: 'random',
       sites: parseInt($.inputs.voronoi.sites.value, 10),
       relax: parseInt($.inputs.voronoi.relax.value, 10)
     };
   } else if ($.inputs.gridTypeHexagon.checked) {
-    format = formatHexagon;
     config.shape = 'hexagon';
   }
-}
-
-// Utils
-function formatVoronoi(ratios, point) {
-  return {
-    x: ratios.width * point.x,
-    y: ratios.height * point.y
-  };
-}
-
-function formatHexagon(ratios, point) {
-  return {
-    x: ratios.width * (point.x + 2/3),
-    y: ratios.height * (point.x / 2 + point.y + 1/2)
-  };
-}
-
-function drawCell(cell, ratios) {
-  if (cell.ocean) {
-    // if (cell.elevation < -0.95) {
-    //   $.context.fillStyle = `rgba(180,71,10, 1)`;
-    // } else if (cell.elevation < -0.5) {
-    //   $.context.fillStyle = `rgba(13,200,15, ${Math.abs(cell.elevation)})`;
-    // } else {
-    //   $.context.fillStyle = `rgba(13,71,161, ${0.4 + Math.abs(cell.elevation)})`;
-    // }
-    $.context.fillStyle = `rgba(13,71,161, ${0.4 + Math.abs(cell.elevation)})`;
-  } else if (cell.elevation < 0) {
-    $.context.fillStyle = '#2f9ceb';
-  } else {
-    $.context.fillStyle = `rgba(0,0,0, ${cell.elevation})`;
-  }
-
-  $.context.beginPath();
-  const start = format(ratios, cell.edges[0].start);
-  $.context.moveTo(start.x, start.y);
-
-  cell.edges.forEach(edge => {
-    const end = format(ratios, edge.end);
-    $.context.lineTo(end.x, end.y);
-  })
-  $.context.fill();
-  $.context.closePath();
-}
-
-function drawEdge(edge, ratios) {
-  if (edge.rivers) {
-    $.context.strokeStyle = '#369eea';
-    $.context.lineWidth = 1 + 2 * edge.rivers.length;
-  } else {
-    $.context.strokeStyle = '#000';
-    $.context.lineWidth = 1;
-  }
-
-  $.context.beginPath();
-  const v1 = format(ratios, edge.v1);
-  const v2 = format(ratios, edge.v2);
-  $.context.moveTo(v1.x, v1.y);
-  $.context.lineTo(v2.x, v2.y);
-  $.context.stroke();
-  $.context.closePath();
-}
-
-function draw() {
-  const start = performance.now();
-  const ratios = { width: grid.width / config.width, height: grid.height / config.height };
-  world.grid.cells.forEach(cell => drawCell(cell, ratios));
-  world.grid.edges.forEach(edge => drawEdge(edge, ratios));
-  console.debug('Duration world drawing:', Math.round(performance.now() - start), 'ms');
 }
