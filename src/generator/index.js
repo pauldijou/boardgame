@@ -5,6 +5,7 @@ import { isWater, filterWater, filterOcean, coastElevation, tagOcean, removeCoas
 import { assignRivers } from './rivers';
 import * as Debug from './debug';
 import * as Grid from './grid';
+import { normalize, addFunctions } from './utils';
 
 function cylindrical(noise, circumference) {
   return function cylindrical2D(x, y) {
@@ -55,9 +56,10 @@ export default function generate(options = {}) {
     || (noise.shape === 'spherical' && noise.spherical2D.bind(noise, noiseConfig.circumference))
     || noise.in2D.bind(noise);
 
-  const grid =
+  const grid = addFunctions(normalize(
     (voronoi && Grid.voronoi(Object.assign({}, voronoi, { width, height })))
-    || Grid.hexagon({ width, height });
+    || Grid.hexagon({ width, height })
+  ));
 
   console.log('Grid valid?', Grid.validate(grid));
   world.grid = grid;
@@ -87,7 +89,7 @@ export default function generate(options = {}) {
 
   // We will calculate the elevation of an edge as the average of both the cells around it
   grid.edges.forEach(edge => {
-    edge.elevation = ((edge.c1 ? edge.c1.elevation : 0) + (edge.c2 ? edge.c2.elevation : 0)) / ((edge.c1 ? 1 : 0) + (edge.c2 ? 1 : 0));
+    edge.elevation = ((edge.hasLeft ? edge.getLeft().elevation : 0) + (edge.hasRight ? edge.getRight().elevation : 0)) / ((edge.hasLeft ? 1 : 0) + (edge.hasRight ? 1 : 0));
   });
 
   // Rivers

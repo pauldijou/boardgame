@@ -187,7 +187,8 @@ function updateConfig() {
     },
     rivers: {
       number: 10,
-      minHeight: 0.6
+      minHeight: 0.6,
+      minLength: 15,
     },
     // volcanos: {
     //   number: 2,

@@ -35,8 +35,8 @@ function isVertex(vertex, { isVertexId }) {
   return vertex && isVertexId(vertex.id) && (typeof vertex.x === 'number') && (typeof vertex.y === 'number');
 }
 
-function hasVertices(grid) {
-  return Array.isArray(grid.vertices) && grid.vertices.every(isVertex);
+function hasVertices(grid, options) {
+  return Array.isArray(grid.vertices) && grid.vertices.every(v => isVertex(v, options));
 }
 
 function isCell(cell, options) {
@@ -51,8 +51,8 @@ function isOrientedEdge(edge, { isVertexId, isEdgeId }) {
   return edge && isEdgeId(edge.id) && isVertexId(edge.start) && isVertexId(edge.end) && isEdgeId(edge.neighbor);
 }
 
-function isEdge(edge, { isVertexId }) {
-  return edge && isEdgeId(edge.id) && isVertexId(edge.v1) && isVertexId(edge.v2);
+function isEdge(edge, { isVertexId, isCellId }) {
+  return edge && isEdgeId(edge.id) && isVertexId(edge.start) && isVertexId(edge.end) && isCellId(edge.left) && isCellId(edge.right);
 }
 
 function hasEdges(grid, options) {

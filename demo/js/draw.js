@@ -27,15 +27,25 @@ function drawCell(cell, ratios, format) {
   } else if (cell.water) {
     context.fillStyle = '#2f9ceb';
   } else {
-    context.fillStyle = `rgba(0,0,0, ${Math.max(0, cell.elevation)})`;
+    const colors = [
+      'Red', 'MediumSeaGreen', 'Magenta', 'DarkOrange', 'Turquoise', 'Gold', 'Brown', 'DeepPink', 'Lime', 'DarkMagenta', 'OrangeRed', 'Teal', 'RoyalBlue', 'MediumVioletRed', 'ForestGreen', 'DarkViolet', 'FireBrick', 'LightSeaGreen'
+    ];
+
+    if (!cell.distanceOcean) {
+      console.warn('no distance');
+      console.log(cell);
+    }
+
+    context.fillStyle = colors[cell.distanceOcean] || 'white';
+    // context.fillStyle = `rgba(0,0,0, ${Math.max(0, cell.elevation)})`;
   }
 
   context.beginPath();
-  const start = format(ratios, cell.edges[0].start);
+  const start = format(ratios, cell.edges[0].getStart());
   context.moveTo(start.x, start.y);
 
   cell.edges.forEach(edge => {
-    const end = format(ratios, edge.end);
+    const end = format(ratios, edge.getEnd());
     context.lineTo(end.x, end.y);
   })
   context.fill();
@@ -52,10 +62,10 @@ function drawEdge(edge, ratios, format) {
   }
 
   context.beginPath();
-  const v1 = format(ratios, edge.v1);
-  const v2 = format(ratios, edge.v2);
-  context.moveTo(v1.x, v1.y);
-  context.lineTo(v2.x, v2.y);
+  const start = format(ratios, edge.getStart());
+  const end = format(ratios, edge.getEnd());
+  context.moveTo(start.x, start.y);
+  context.lineTo(end.x, end.y);
   context.stroke();
   context.closePath();
 }

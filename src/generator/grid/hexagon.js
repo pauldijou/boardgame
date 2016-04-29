@@ -60,8 +60,8 @@ export default function generateHexagonGrid(options = {}) {
 
       for(let i = 0; i < 6; ++i) {
         hexagonEdges.push({
-          v1: hexagonVertices[i % 6],
-          v2: hexagonVertices[(i + 1) % 6]
+          start: hexagonVertices[i % 6],
+          end: hexagonVertices[(i + 1) % 6]
         });
       }
 
@@ -71,10 +71,10 @@ export default function generateHexagonGrid(options = {}) {
 
         if (edges[hash1] || edges[hash2]) {
           hexagonEdges[i] = edges[hash1] || edges[hash2];
-          hexagonEdges[i].c2 = cell;
+          hexagonEdges[i].right = cell;
         } else {
           edges[hash1] = hexagonEdges[i];
-          hexagonEdges[i].c1 = cell;
+          hexagonEdges[i].left = cell;
         }
       }
 

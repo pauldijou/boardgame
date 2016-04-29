@@ -130,10 +130,10 @@ function normalizeDiagram(diagram) {
       rCell.neighbors.push(lCell);
     }
 
-    edge.v1 = edge.va;
-    edge.v2 = edge.vb;
-    edge.c1 = lCell;
-    edge.c2 = rCell;
+    edge.start = edge.va;
+    edge.end = edge.vb;
+    edge.left = lCell;
+    edge.right = rCell;
   });
 
   return diagram;

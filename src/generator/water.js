@@ -134,13 +134,44 @@ export function tagOcean(cells, width, height, coasts, distance) {
   const ocean = starts.filter(isWater).map(t => { t.ocean = true; return t; });
   while(ocean.length) {
     const next = ocean.shift();
-    next.neighbors.forEach(cell => {
+    next.getNeighbors().forEach(cell => {
       if (cell && cell.ocean === undefined) {
         cell.ocean = isWater(cell);
         if (cell.ocean) {
+          cell.distanceOcean = 0;
           ocean.push(cell);
+        } else {
+          cell.distanceOcean = 1;
         }
       }
+    });
+  }
+
+  let currentDistance = 1;
+  let currentCells = cells.filter(c => c.distanceOcean === currentDistance);
+  while(currentCells.length) {
+    console.log('current', currentCells.length, currentDistance);
+
+    // 1) Merge all neighbors
+    const nexts = currentCells.reduce((nexts, cell) => {
+      return nexts.concat(cell.neighbors);
+    }, []).sort();
+
+    // 2) Remove duplicates by sorting and removing consecutive items
+    currentCells = [];
+    for (let i = 0; i < nexts.length - 1; ++i) {
+      if (nexts[i] !== nexts[i+1]) {
+        currentCells.push(nexts[i]);
+      }
+    }
+
+    // 3) Remove cells with already a distance
+    currentCells = currentCells.map(idx => cells[idx]).filter(cell => cell.distanceOcean === undefined);
+
+    // 4) Assign the current distance to remaining cells
+    currentDistance++;
+    currentCells.forEach(cell => {
+      cell.distanceOcean = currentDistance;
     });
   }
 }
